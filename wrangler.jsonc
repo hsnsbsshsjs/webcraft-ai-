@@ -1,15 +1,21 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "webcraft-ai",
+  "name": "webcraft-ai-1",
   "main": "worker.js",
-  "compatibility_date": "2026-08-29",
+  "compatibility_date": "2026-08-28",
 
   "ai": {
     "binding": "AI"
   },
 
   "assets": {
-    "directory": "./public",
-    "binding": "ASSETS"
-  }
+    "directory": "./public"
+  },
+
+  "kv_namespaces": [
+    {
+      "binding": "SITES",
+      "id": "1f7b600edbb145f790b28fd42d926a2f"
+    }
+  ]
 }
