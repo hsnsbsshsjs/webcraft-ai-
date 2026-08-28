@@ -1,14 +1,345 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>WebCraft AI</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WebCraft AI - AI Website Builder</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b0b10;
+            color: white;
+        }
+
+        button,
+        textarea {
+            font-family: inherit;
+        }
+
+        /* HEADER */
+
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+        .logo span {
+            color: #9b5cff;
+        }
+
+        /* HERO */
+
+        .hero {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 60px 20px 80px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 9px 15px;
+            border: 1px solid #30263f;
+            background: #15121c;
+            border-radius: 50px;
+            color: #c7a9ff;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+        h1 {
+            max-width: 850px;
+            font-size: clamp(42px, 8vw, 78px);
+            line-height: 1.05;
+            margin: 0;
+            letter-spacing: -3px;
+        }
+
+        h1 span {
+            color: #9b5cff;
+        }
+
+        .subtitle {
+            max-width: 650px;
+            color: #a9a9b5;
+            font-size: 19px;
+            line-height: 1.6;
+            margin: 25px auto 35px;
+        }
+
+        /* BUILDER */
+
+        .builder {
+            width: 100%;
+            max-width: 900px;
+            background: #121219;
+            border: 1px solid #292933;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+        }
+
+        #prompt {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            background: #191920;
+            border: 1px solid #34343f;
+            border-radius: 14px;
+            color: white;
+            padding: 18px;
+            font-size: 16px;
+            line-height: 1.5;
+            outline: none;
+        }
+
+        #prompt:focus {
+            border-color: #9b5cff;
+        }
+
+        #prompt::placeholder {
+            color: #777783;
+        }
+
+        #generateBtn {
+            width: 100%;
+            margin-top: 14px;
+            min-height: 55px;
+            border: none;
+            border-radius: 13px;
+            background: #9b5cff;
+            color: white;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+        #generateBtn:hover {
+            transform: translateY(-1px);
+            background: #8b4cf0;
+        }
+
+        #generateBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* EXAMPLES */
+
+        .examples {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 35px;
+        }
+
+        .examples-title {
+            color: #858592;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+        .example-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .example-btn {
+            background: #17171f;
+            border: 1px solid #292933;
+            color: #dddde5;
+            padding: 11px 17px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        .example-btn:hover {
+            border-color: #9b5cff;
+            color: white;
+        }
+
+        /* STATUS */
+
+        #status {
+            min-height: 25px;
+            margin-top: 16px;
+            color: #aaaab5;
+            font-size: 14px;
+        }
+
+        /* FEATURES */
+
+        .features {
+            padding: 80px 20px;
+            background: #101017;
+            border-top: 1px solid #20202a;
+        }
+
+        .features h2 {
+            text-align: center;
+            font-size: 35px;
+            margin: 0 0 40px;
+        }
+
+        .feature-grid {
+            max-width: 1000px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+        .feature {
+            background: #16161e;
+            border: 1px solid #292933;
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+        .feature h3 {
+            margin: 0 0 10px;
+        }
+
+        .feature p {
+            color: #9999a5;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+        /* FOOTER */
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #777783;
+            background: #0b0b10;
+            border-top: 1px solid #20202a;
+        }
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .hero {
+                padding-top: 40px;
+            }
+
+            h1 {
+                letter-spacing: -2px;
+            }
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+            .builder {
+                padding: 14px;
+            }
+
+            #prompt {
+                min-height: 160px;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .features {
+                padding: 60px 20px;
+            }
+        }
+    </style>
 </head>
+
 <body>
 
-  <h1>✨ WebCraft AI</h1>
-  <p>AI Website Builder is running.</p>
+<header>
+    <div class="logo">
+        ✨ WebCraft <span>AI</span>
+    </div>
+</header>
 
-</body>
-</html>
+
+<section class="hero">
+
+    <div class="badge">
+        ✨ AI-Powered Website Builder
+    </div>
+
+    <h1>
+        Build a website
+        <br>
+        <span>with AI</span>
+    </h1>
+
+    <p class="subtitle">
+        Describe the website you want and let WebCraft AI
+        create a beautiful, responsive website for you.
+    </p>
+
+
+    <div class="builder">
+
+        <textarea
+            id="prompt"
+            placeholder="Describe the website you want...
+
+Example:
+Create a professional cleaning company website for a business in Kampala, Uganda. Include a hero section, services, prices, about us, gallery, testimonials, contact information, WhatsApp button, opening hours and footer."
+        ></textarea>
+
+        <button id="generateBtn">
+            ✨ Generate Website
+        </button>
+
+        <div id="status"></div>
+
+    </div>
+
+
+    <div class="examples">
+
+        <div class="examples-title">
+            Try an example:
+        </div>
+
+        <div class="example-buttons">
+
+            <button
+                class="example-btn"
+                onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')">
+                🍔 Restaurant
+            </button>
+
+            <button
+                class="example-btn"
+                onclick="useExample('Create a professional portfolio
