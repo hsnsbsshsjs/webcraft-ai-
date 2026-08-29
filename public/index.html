@@ -19,7 +19,7 @@
             margin: 0;
             font-family: Arial, Helvetica, sans-serif;
             background: #0b0b10;
-            color: white;
+            color: #ffffff;
         }
 
         button,
@@ -136,14 +136,23 @@
         }
 
         #generateBtn:hover {
-            transform: translateY(-1px);
             background: #8b4cf0;
+            transform: translateY(-1px);
         }
 
         #generateBtn:disabled {
             opacity: 0.6;
             cursor: not-allowed;
             transform: none;
+        }
+
+        /* STATUS */
+
+        #status {
+            min-height: 25px;
+            margin-top: 16px;
+            color: #aaaab5;
+            font-size: 14px;
         }
 
         /* EXAMPLES */
@@ -175,20 +184,12 @@
             border-radius: 50px;
             cursor: pointer;
             font-size: 14px;
+            transition: 0.2s;
         }
 
         .example-btn:hover {
             border-color: #9b5cff;
             color: white;
-        }
-
-        /* STATUS */
-
-        #status {
-            min-height: 25px;
-            margin-top: 16px;
-            color: #aaaab5;
-            font-size: 14px;
         }
 
         /* FEATURES */
@@ -282,64 +283,377 @@
 
 <body>
 
-<header>
-    <div class="logo">
-        ✨ WebCraft <span>AI</span>
-    </div>
-</header>
+    <!-- HEADER -->
+
+    <header>
+        <div class="logo">
+            ✨ WebCraft <span>AI</span>
+        </div>
+    </header>
 
 
-<section class="hero">
+    <!-- HERO -->
 
-    <div class="badge">
-        ✨ AI-Powered Website Builder
-    </div>
+    <section class="hero">
 
-    <h1>
-        Build a website
-        <br>
-        <span>with AI</span>
-    </h1>
+        <div class="badge">
+            ✨ AI-Powered Website Builder
+        </div>
 
-    <p class="subtitle">
-        Describe the website you want and let WebCraft AI
-        create a beautiful, responsive website for you.
-    </p>
+        <h1>
+            Build a website
+            <br>
+            <span>with AI</span>
+        </h1>
+
+        <p class="subtitle">
+            Describe the website you want and let WebCraft AI
+            create a beautiful, professional and responsive website for you.
+        </p>
 
 
-    <div class="builder">
+        <!-- BUILDER -->
 
-        <textarea
-            id="prompt"
-            placeholder="Describe the website you want...
+        <div class="builder">
+
+            <textarea
+                id="prompt"
+                placeholder="Describe the website you want...
 
 Example:
 Create a professional cleaning company website for a business in Kampala, Uganda. Include a hero section, services, prices, about us, gallery, testimonials, contact information, WhatsApp button, opening hours and footer."
-        ></textarea>
-
-        <button id="generateBtn">
-            ✨ Generate Website
-        </button>
-
-        <div id="status"></div>
-
-    </div>
+            ></textarea>
 
 
-    <div class="examples">
-
-        <div class="examples-title">
-            Try an example:
-        </div>
-
-        <div class="example-buttons">
-
-            <button
-                class="example-btn"
-                onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')">
-                🍔 Restaurant
+            <button id="generateBtn">
+                ✨ Generate Website
             </button>
 
-            <button
-                class="example-btn"
-                onclick="useExample('Create a professional portfolio
+
+            <div id="status"></div>
+
+        </div>
+
+
+        <!-- EXAMPLES -->
+
+        <div class="examples">
+
+            <div class="examples-title">
+                Try an example:
+            </div>
+
+            <div class="example-buttons">
+
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')">
+                    🍔 Restaurant
+                </button>
+
+
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a professional portfolio website for a web developer. Include a hero section, about me, skills, projects, services, testimonials and contact section.')">
+                    💻 Portfolio
+                </button>
+
+
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a modern school website with information about the school, courses, teachers, admissions, fees, gallery, testimonials, contact information and school opening hours.')">
+                    🎓 School
+                </button>
+
+
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a professional cleaning company website for a cleaning business in Kampala, Uganda. Include services, prices, about us, gallery, testimonials, contact information, WhatsApp button and opening hours.')">
+                    🧹 Cleaning
+                </button>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FEATURES -->
+
+    <section class="features">
+
+        <h2>
+            Build websites faster
+        </h2>
+
+
+        <div class="feature-grid">
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    🤖
+                </div>
+
+                <h3>
+                    AI Generation
+                </h3>
+
+                <p>
+                    Describe your business and WebCraft AI
+                    creates the website for you.
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    📱
+                </div>
+
+                <h3>
+                    Responsive Design
+                </h3>
+
+                <p>
+                    Generated websites are designed to work
+                    on phones, tablets and computers.
+                </p>
+
+            </div>
+
+
+            <div class="feature">
+
+                <div class="feature-icon">
+                    ⚡
+                </div>
+
+                <h3>
+                    Fast Creation
+                </h3>
+
+                <p>
+                    Turn a simple idea into a complete website
+                    in seconds.
+                </p>
+
+            </div>
+
+        </div>
+
+    </section>
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        © 2026 WebCraft AI.
+        Built with AI.
+
+    </footer>
+
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+        const generateBtn =
+            document.getElementById("generateBtn");
+
+        const promptBox =
+            document.getElementById("prompt");
+
+        const status =
+            document.getElementById("status");
+
+
+        /*
+         * PUTTING AN EXAMPLE INTO THE PROMPT
+         */
+
+        function useExample(text) {
+
+            promptBox.value = text;
+
+            promptBox.focus();
+
+        }
+
+
+        /*
+         * GENERATE WEBSITE
+         */
+
+        generateBtn.addEventListener(
+            "click",
+            async function () {
+
+                const prompt =
+                    promptBox.value.trim();
+
+
+                if (!prompt) {
+
+                    status.textContent =
+                        "⚠️ Please describe the website you want.";
+
+                    return;
+
+                }
+
+
+                generateBtn.disabled = true;
+
+                generateBtn.textContent =
+                    "✨ Creating...";
+
+                status.textContent =
+                    "🧠 AI is designing your website...";
+
+
+                try {
+
+                    /*
+                     * Send the request to our
+                     * Cloudflare Worker.
+                     */
+
+                    const response =
+                        await fetch(
+                            "/api/generate",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    prompt: prompt
+                                })
+                            }
+                        );
+
+
+                    /*
+                     * Convert response to JSON
+                     */
+
+                    const data =
+                        await response.json();
+
+
+                    /*
+                     * Check for errors
+                     */
+
+                    if (
+                        !response.ok ||
+                        !data.success
+                    ) {
+
+                        throw new Error(
+                            data.error ||
+                            "Website generation failed."
+                        );
+
+                    }
+
+
+                    /*
+                     * Save generated website
+                     */
+
+                    localStorage.setItem(
+                        "generatedWebsite",
+                        data.website
+                    );
+
+
+                    localStorage.setItem(
+                        "websitePrompt",
+                        prompt
+                    );
+
+
+                    /*
+                     * Show success
+                     */
+
+                    status.textContent =
+                        "✅ Website created successfully!";
+
+
+                    /*
+                     * Open preview
+                     */
+
+                    window.location.href =
+                        "/preview.html";
+
+                }
+
+
+                catch (error) {
+
+                    console.error(
+                        "WebCraft AI Error:",
+                        error
+                    );
+
+
+                    status.textContent =
+                        "❌ " +
+                        (
+                            error.message ||
+                            "Something went wrong."
+                        );
+
+                }
+
+
+                finally {
+
+                    generateBtn.disabled =
+                        false;
+
+                    generateBtn.textContent =
+                        "✨ Generate Website";
+
+                }
+
+            }
+        );
+
+
+        /*
+         * CTRL + ENTER
+         * ALSO GENERATES THE WEBSITE
+         */
+
+        promptBox.addEventListener(
+            "keydown",
+            function (event) {
+
+                if (
+                    event.ctrlKey &&
+                    event.key === "Enter"
+                ) {
+
+                    generateBtn.click();
+
+                }
+
+            }
+        );
+
+    </script>
+
+</body>
+                </html>
