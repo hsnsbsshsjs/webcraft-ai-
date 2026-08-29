@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>WebCraft AI - Preview</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #0b0b10;
+            color: white;
+        }
+
+        .topbar {
+            min-height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            padding: 12px 20px;
+            background: #111118;
+            border-bottom: 1px solid #292932;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo {
+            font-size: 20px;
+            font-weight: bold;
+        }
+
+        .logo span {
+            color: #9b5cff;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 10px;
+        }
+
+        button {
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            border-radius: 10px;
+            padding: 11px 16px;
+        }
+
+        .back {
+            background: #24242d;
+            color: white;
+        }
+
+        .download {
+            background: #9b5cff;
+            color: white;
+        }
+
+        .editor {
+            padding: 18px;
+            background: #111118;
+            border-bottom: 1px solid #292932;
+        }
+
+        .editor-title {
+            max-width: 1000px;
+            margin: 0 auto 10px;
+            font-weight: bold;
+        }
+
+        .edit-row {
+            max-width: 1000px;
+            margin: auto;
+            display: flex;
+            gap: 10px;
+        }
+
+        #editPrompt {
+            flex: 1;
+            min-height: 55px;
+            resize: vertical;
+            padding: 15px;
+            border-radius: 12px;
+            border: 1px solid #34343e;
+            background: #191920;
+            color: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+        #editPrompt:focus {
+            border-color: #9b5cff;
+        }
+
+        #editBtn {
+            background: #9b5cff;
+            color: white;
+            min-width: 140px;
+        }
+
+        #editBtn:disabled {
+            opacity: 0.6;
+        }
+
+        #status {
+            text-align: center;
+            color: #aaaab5;
+            min-height: 25px;
+            margin-top: 10px;
+        }
+
+        .preview-area {
+            padding: 20px;
+            background: #242424;
+            min-height: calc(100vh - 180px);
+        }
+
+        .preview-box {
+            width: 100%;
+            max-width: 1400px;
+            margin: auto;
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 40px rgba(0,0,0,.4);
+        }
+
+        #websitePreview {
+            width: 100%;
+            height: 78vh;
+            border: none;
+            display: block;
+            background: white;
+        }
+
+        .empty {
+            min-height: 70vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            text-align: center;
+        }
+
+        .empty button {
+            background: #9b5cff;
+            color: white;
+        }
+
+        @media (max-width: 700px) {
+
+            .topbar {
+                flex-wrap: wrap;
+            }
+
+            .buttons {
+                width: 100%;
+            }
+
+            .buttons button {
+                flex: 1;
+            }
+
+            .edit-row {
+                flex-direction: column;
+            }
+
+            #editBtn {
+                min-height: 50px;
+            }
+
+            .preview-area {
+                padding: 8px;
+            }
+
+            #websitePreview {
+                height: 72vh;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header class="topbar">
+
+    <div class="logo">
+        ✨ WebCraft <span>AI</span>
+    </div>
+
+    <div class="buttons">
+
+        <button
+            class="back"
+            onclick="goBack()">
+            ← Back
+        </button>
+
+        <button
+            class="download"
+            onclick="downloadWebsite()">
+            📥 Download
+        </button>
+
+    </div>
+
+</header>
+
+
+<section class="editor">
+
+    <div class="editor-title">
+        ✏️ Edit your website with AI
+    </div>
+
+    <div class="edit-row">
+
+        <textarea
+            id="editPrompt"
+            placeholder="Tell AI what you want to change...
+
+Example:
+Change the colors to green and white.
+Add a WhatsApp button.
+Add a pricing section.
+Make the hero section more attractive."
+        ></textarea>
+
+        <button
+            id="editBtn"
+            onclick="editWebsite()">
+            ✨ Edit Website
+        </button>
+
+    </div>
+
+    <div id="status"></div>
+
+</section>
+
+
+<main class="preview-area">
+
+    <div
+        id="emptyState"
+        class="empty"
+        style="display:none;">
+
+        <h2>No website found</h2>
+
+        <p>
+            Generate a website first.
+        </p>
+
+        <button onclick="goBack()">
+            ✨ Create Website
+        </button>
+
+    </div>
+
+
+    <div
+        id="previewBox"
+        class="preview-box">
+
+        <iframe
+            id="websitePreview"
+            title="Generated Website">
+        </iframe>
+
+    </div>
+
+</main>
+
+
+<script>
+
+const AI_URL =
+    "https://webcraft-ai-1.lutaayacyrus76.workers.dev/";
+
+
+const preview =
+    document.getElementById("websitePreview");
+
+const editPrompt =
+    document.getElementById("editPrompt");
+
+const editBtn =
+    document.getElementById("editBtn");
+
+const status =
+    document.getElementById("status");
+
+const previewBox =
+    document.getElementById("previewBox");
+
+const emptyState =
+    document.getElementById("emptyState");
+
+
+let website =
+    localStorage.getItem("generatedWebsite");
+
+
+/*
+ * LOAD GENERATED WEBSITE
+ */
+
+if (!website) {
+
+    previewBox.style.display = "none";
+
+    emptyState.style.display = "flex";
+
+    status.textContent =
+        "⚠️ No generated website found.";
+
+} else {
+
+    preview.srcdoc = website;
+
+    status.textContent =
+        "✅ Website loaded.";
+
+}
+
+
+/*
+ * EDIT WEBSITE WITH AI
+ */
+
+async function editWebsite() {
+
+    const instruction =
+        editPrompt.value.trim();
+
+
+    if (!instruction) {
+
+        status.textContent =
+            "⚠️ Tell the AI what you want to change.";
+
+        return;
+    }
+
+
+    if (!website) {
+
+        status.textContent =
+            "❌ There is no website to edit.";
+
+        return;
+    }
+
+
+    editBtn.disabled = true;
+
+    editBtn.textContent =
+        "✨ Editing...";
+
+    status.textContent =
+        "🧠 AI is updating your website...";
+
+
+    try {
+
+        const response =
+            await fetch(AI_URL, {
+
+                method: "POST",
+
+                headers: {
+                    "Content-Type":
+                        "application/json"
+                },
+
+                body: JSON.stringify({
+
+                    mode: "edit",
+
+                    prompt: instruction,
+
+                    website: website
+
+                })
+
+            });
+
+
+        const data =
+            await response.json();
+
+
+        if (
+            !response.ok ||
+            !data.success
+        ) {
+
+            throw new Error(
+                data.error ||
+                "Website editing failed."
+            );
+
+        }
+
+
+        website =
+            data.website;
+
+
+        localStorage.setItem(
+            "generatedWebsite",
+            website
+        );
+
+
+        preview.srcdoc =
+            website;
+
+
+        editPrompt.value = "";
+
+
+        status.textContent =
+            "✅ Website updated successfully!";
+
+    }
+
+    catch (error) {
+
+        console.error(error);
+
+        status.textContent =
+            "❌ " + error.message;
+
+    }
+
+    finally {
+
+        editBtn.disabled = false;
+
+        editBtn.textContent =
+            "✨ Edit Website";
+
+    }
+
+}
+
+
+/*
+ * DOWNLOAD WEBSITE
+ */
+
+function downloadWebsite() {
+
+    if (!website) {
+
+        alert(
+            "No website available to download."
+        );
+
+        return;
+    }
+
+
+    const blob =
+        new Blob(
+            [website],
+            {
+                type: "text/html"
+            }
+        );
+
+
+    const url =
+        URL.createObjectURL(blob);
+
+
+    const link =
+        document.createElement("a");
+
+
+    link.href = url;
+
+    link.download =
+        "webcraft-website.html";
+
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+
+    URL.revokeObjectURL(url);
+
+}
+
+
+/*
+ * BACK
+ */
+
+function goBack() {
+
+    window.location.href =
+        "/";
+
+}
+
+
+/*
+ * CTRL + ENTER
+ */
+
+editPrompt.addEventListener(
+    "keydown",
+    function(event) {
+
+        if (
+            event.ctrlKey &&
+            event.key === "Enter"
+        ) {
+
+            editWebsite();
+
+        }
+
+    }
+);
+
+</script>
+
+</body>
+</html>
