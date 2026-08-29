@@ -8,7 +8,7 @@ export default {
     };
 
     /*
-     * CORS preflight
+     * CORS
      */
     if (request.method === "OPTIONS") {
       return new Response(null, {
@@ -20,11 +20,20 @@ export default {
     const url = new URL(request.url);
 
     /*
-     * Serve the website files from /public
+     * ================================
+     * WEBSITE FILES
+     * ================================
      */
+
     if (request.method === "GET") {
 
-      if (url.pathname === "/" || url.pathname === "/index.html") {
+      /*
+       * Homepage
+       */
+      if (
+        url.pathname === "/" ||
+        url.pathname === "/index.html"
+      ) {
         return env.ASSETS.fetch(
           new Request(
             new URL("/index.html", request.url),
@@ -33,6 +42,9 @@ export default {
         );
       }
 
+      /*
+       * Preview page
+       */
       if (url.pathname === "/preview.html") {
         return env.ASSETS.fetch(
           new Request(
@@ -43,7 +55,7 @@ export default {
       }
 
       /*
-       * Allow other static files
+       * Other static files
        */
       if (!url.pathname.startsWith("/api/")) {
         return env.ASSETS.fetch(request);
@@ -52,10 +64,13 @@ export default {
 
 
     /*
+     * ================================
      * AI GENERATION API
+     * ================================
      *
      * POST /api/generate
      */
+
     if (
       request.method === "POST" &&
       url.pathname === "/api/generate"
@@ -63,20 +78,22 @@ export default {
 
       try {
 
-        const body = await request.json();
+        /*
+         * Read request body
+         */
 
-        const mode = body.mode || "create";
-        const prompt = body.prompt || "";
-        const existingWebsite =
-          body.website || "";
+        let body;
 
+        try {
 
-        if (!prompt) {
+          body = await request.json();
+
+        } catch (error) {
 
           return json(
             {
               success: false,
-              error: "Please provide a prompt."
+              error: "Invalid JSON request."
             },
             400
           );
@@ -84,49 +101,96 @@ export default {
         }
 
 
-        let systemPrompt;
+        /*
+         * Get request values
+         */
+
+        const mode =
+          body.mode || "create";
+
+        const prompt =
+          typeof body.prompt === "string"
+            ? body.prompt.trim()
+            : "";
+
+        const existingWebsite =
+          typeof body.website === "string"
+            ? body.website
+            : "";
 
 
         /*
-         * CREATE MODE
+         * Validate prompt
          */
 
-        if (mode === "create") {
+        if (!prompt) {
 
-          systemPrompt = `
-You are WebCraft AI, an expert website designer and developer.
-
-Create a complete, beautiful, professional and responsive website based on the user's request.
-
-RULES:
-
-- Return ONLY complete HTML.
-- Start with <!DOCTYPE html>.
-- Include CSS inside <style>.
-- Include JavaScript inside <script> when useful.
-- Make the website responsive on phones, tablets and computers.
-- Create a professional modern design.
-- Include realistic useful content.
-- Make navigation and buttons functional where possible.
-- Use semantic HTML.
-- Make the website visually attractive.
-- Do not use Markdown.
-- Do not use code fences.
-- Do not explain anything.
-- Return ONLY HTML.
-
-USER REQUEST:
-${prompt}
-`;
+          return json(
+            {
+              success: false,
+              error:
+                "Please provide a prompt."
+            },
+            400
+          );
 
         }
 
 
         /*
-         * EDIT MODE
+         * ================================
+         * CREATE MODE
+         * ================================
          */
 
-        else if (mode === "edit") {
+        if (mode === "create") {
+
+          const systemPrompt = `
+You are WebCraft AI, an expert website designer and developer.
+
+Create a complete, beautiful, professional and responsive website based on the user's request.
+
+IMPORTANT RULES:
+
+1. Return ONLY complete HTML.
+2. Start with <!DOCTYPE html>.
+3. Include all CSS inside <style>.
+4. Include JavaScript inside <script> when useful.
+5. Make the website responsive on phones, tablets and computers.
+6. Create a modern professional design.
+7. Include realistic useful content.
+8. Make buttons and navigation functional where possible.
+9. Use semantic HTML.
+10. Do not use Markdown.
+11. Do not use code fences.
+12. Do not explain anything.
+13. Return ONLY HTML.
+
+USER REQUEST:
+
+${prompt}
+`;
+
+
+          return await generateWebsite(
+            systemPrompt,
+            prompt
+          );
+
+        }
+
+
+        /*
+         * ================================
+         * EDIT MODE
+         * ================================
+         */
+
+        if (mode === "edit") {
+
+          /*
+           * Check existing website
+           */
 
           if (!existingWebsite) {
 
@@ -142,184 +206,101 @@ ${prompt}
           }
 
 
-          systemPrompt = `
+          /*
+           * Prevent accidentally sending
+           * an impossibly large request.
+           */
+
+          if (existingWebsite.length > 900000) {
+
+            return json(
+              {
+                success: false,
+                error:
+                  "The existing website is too large to edit."
+              },
+              413
+            );
+
+          }
+
+
+          const systemPrompt = `
 You are WebCraft AI, an expert website editor.
 
-The user already has a website.
+The user already has a complete website.
 
-Modify the existing website according to the user's instructions.
+Your job is to modify the existing website according to the user's instructions.
 
 IMPORTANT RULES:
 
-- Return the COMPLETE modified HTML.
-- Start with <!DOCTYPE html>.
-- Preserve existing features unless the user asks to remove them.
-- Preserve existing content unless the user asks to change it.
-- Make requested changes accurately.
-- Keep the website responsive.
-- Keep the design professional.
-- Do not use Markdown.
-- Do not use code fences.
-- Do not explain anything.
-- Return ONLY HTML.
+1. Return the COMPLETE modified HTML.
+2. Start with <!DOCTYPE html>.
+3. Preserve existing features unless the user asks to remove them.
+4. Preserve existing content unless the user asks to change it.
+5. Make the requested changes accurately.
+6. Keep the website responsive.
+7. Keep the website professional.
+8. Keep existing JavaScript functionality unless changes are requested.
+9. Do not use Markdown.
+10. Do not use code fences.
+11. Do not explain anything.
+12. Return ONLY HTML.
 
-USER REQUEST:
+USER'S EDITING REQUEST:
+
 ${prompt}
 
 EXISTING WEBSITE:
+
 ${existingWebsite}
 `;
 
-        }
 
-
-        else {
-
-          return json(
-            {
-              success: false,
-              error: "Unknown mode."
-            },
-            400
+          return await generateWebsite(
+            systemPrompt,
+            prompt
           );
 
         }
 
 
         /*
-         * CALL CLOUDFLARE WORKERS AI
+         * ================================
+         * UNKNOWN MODE
+         * ================================
          */
-
-        const result = await env.AI.run(
-          "@cf/zai-org/glm-4.7-flash",
-          {
-            messages: [
-              {
-                role: "system",
-                content: systemPrompt
-              },
-              {
-                role: "user",
-                content: prompt
-              }
-            ],
-            max_tokens: 8000,
-            temperature: 0.6
-          }
-        );
-
-
-        /*
-         * GET AI RESPONSE
-         */
-
-        let website = "";
-
-
-        if (
-          result &&
-          result.choices &&
-          result.choices[0] &&
-          result.choices[0].message
-        ) {
-
-          website =
-            result.choices[0].message.content || "";
-
-        }
-
-
-        if (
-          !website &&
-          result &&
-          result.response
-        ) {
-
-          website = result.response;
-
-        }
-
-
-        if (
-          !website &&
-          result &&
-          result.output_text
-        ) {
-
-          website = result.output_text;
-
-        }
-
-
-        /*
-         * Make sure response is a string
-         */
-
-        if (typeof website !== "string") {
-
-          website = JSON.stringify(website);
-
-        }
-
-
-        /*
-         * Remove accidental Markdown code fences
-         */
-
-        website = website
-          .replace(/^```html\s*/i, "")
-          .replace(/^```\s*/i, "")
-          .replace(/\s*```$/i, "")
-          .trim();
-
-
-        /*
-         * Validate response
-         */
-
-        if (
-          !website ||
-          website.length < 50
-        ) {
-
-          return json(
-            {
-              success: false,
-              error:
-                "AI returned an empty website."
-            },
-            500
-          );
-
-        }
-
-
-        /*
-         * Return generated website
-         */
-
-        return json({
-          success: true,
-          website: website
-        });
-
-
-      }
-
-      catch (error) {
-
-        console.error(
-          "AI ERROR:",
-          error
-        );
-
 
         return json(
           {
             success: false,
             error:
-              error.message ||
-              "Website generation failed."
+              "Unknown mode: " + mode
+          },
+          400
+        );
+
+
+      } catch (error) {
+
+        /*
+         * NEVER allow the Worker to return
+         * an empty response.
+         */
+
+        console.error(
+          "WORKER ERROR:",
+          error
+        );
+
+        return json(
+          {
+            success: false,
+            error:
+              error &&
+              error.message
+                ? error.message
+                : "Website generation failed."
           },
           500
         );
@@ -330,23 +311,343 @@ ${existingWebsite}
 
 
     /*
-     * Unknown request
+     * ================================
+     * UNKNOWN REQUEST
+     * ================================
      */
 
     return json(
       {
         success: false,
-        error: "Not found."
+        error:
+          "Not found."
       },
       404
     );
 
 
     /*
-     * JSON RESPONSE HELPER
+     * ================================
+     * AI GENERATION FUNCTION
+     * ================================
      */
 
-    function json(data, status = 200) {
+    async function generateWebsite(
+      systemPrompt,
+      userPrompt
+    ) {
+
+      try {
+
+        /*
+         * Check AI binding
+         */
+
+        if (!env.AI) {
+
+          return json(
+            {
+              success: false,
+              error:
+                "Workers AI binding is not available."
+            },
+            500
+          );
+
+        }
+
+
+        /*
+         * Run Workers AI
+         */
+
+        const result =
+          await env.AI.run(
+            "@cf/zai-org/glm-4.7-flash",
+            {
+              messages: [
+                {
+                  role: "system",
+                  content: systemPrompt
+                },
+                {
+                  role: "user",
+                  content: userPrompt
+                }
+              ],
+
+              max_tokens: 12000,
+
+              temperature: 0.6
+            }
+          );
+
+
+        console.log(
+          "AI RESULT RECEIVED"
+        );
+
+
+        /*
+         * Extract generated HTML
+         */
+
+        let website = "";
+
+
+        /*
+         * Standard chat completion response
+         */
+
+        if (
+          result &&
+          Array.isArray(result.choices) &&
+          result.choices.length > 0
+        ) {
+
+          const choice =
+            result.choices[0];
+
+          if (
+            choice &&
+            choice.message
+          ) {
+
+            website =
+              choice.message.content ||
+              "";
+
+          }
+
+          /*
+           * Some response formats
+           * may use text directly.
+           */
+
+          if (
+            !website &&
+            choice &&
+            typeof choice.text === "string"
+          ) {
+
+            website =
+              choice.text;
+
+          }
+
+        }
+
+
+        /*
+         * Other possible Workers AI
+         * response formats
+         */
+
+        if (
+          !website &&
+          result &&
+          typeof result.response === "string"
+        ) {
+
+          website =
+            result.response;
+
+        }
+
+
+        if (
+          !website &&
+          result &&
+          typeof result.output_text === "string"
+        ) {
+
+          website =
+            result.output_text;
+
+        }
+
+
+        /*
+         * Handle direct string response
+         */
+
+        if (
+          !website &&
+          typeof result === "string"
+        ) {
+
+          website =
+            result;
+
+        }
+
+
+        /*
+         * Convert anything else to string
+         */
+
+        if (
+          website &&
+          typeof website !== "string"
+        ) {
+
+          website =
+            JSON.stringify(website);
+
+        }
+
+
+        /*
+         * Remove Markdown code fences
+         */
+
+        if (typeof website === "string") {
+
+          website =
+            website
+              .replace(
+                /^```html\s*/i,
+                ""
+              )
+              .replace(
+                /^```\s*/i,
+                ""
+              )
+              .replace(
+                /\s*```$/i,
+                ""
+              )
+              .trim();
+
+        }
+
+
+        /*
+         * Validate generated HTML
+         */
+
+        if (
+          !website ||
+          website.length < 50
+        ) {
+
+          console.error(
+            "EMPTY AI RESPONSE:",
+            JSON.stringify(result)
+          );
+
+          return json(
+            {
+              success: false,
+              error:
+                "AI did not return a complete website. Please try again."
+            },
+            502
+          );
+
+        }
+
+
+        /*
+         * Make sure AI actually returned HTML.
+         *
+         * Some models may occasionally put
+         * text before the HTML.
+         */
+
+        const htmlStart =
+          website.indexOf(
+            "<!DOCTYPE html>"
+          );
+
+        if (htmlStart > 0) {
+
+          website =
+            website.substring(
+              htmlStart
+            );
+
+        }
+
+
+        /*
+         * If there is no DOCTYPE but there
+         * is HTML, allow it.
+         */
+
+        if (
+          !website.includes("<html") &&
+          !website.includes("<!DOCTYPE html>")
+        ) {
+
+          console.error(
+            "AI RESPONSE WAS NOT HTML"
+          );
+
+          return json(
+            {
+              success: false,
+              error:
+                "AI returned an invalid website. Please try again."
+            },
+            502
+          );
+
+        }
+
+
+        /*
+         * SUCCESS
+         */
+
+        return json(
+          {
+            success: true,
+            website: website
+          },
+          200
+        );
+
+
+      } catch (error) {
+
+        console.error(
+          "AI GENERATION ERROR:",
+          error
+        );
+
+
+        /*
+         * Always return valid JSON
+         */
+
+        return json(
+          {
+            success: false,
+            error:
+              error &&
+              error.message
+                ? error.message
+                : "AI generation failed."
+          },
+          500
+        );
+
+      }
+
+    }
+
+
+    /*
+     * ================================
+     * JSON RESPONSE HELPER
+     * ================================
+     */
+
+    function json(
+      data,
+      status = 200
+    ) {
 
       return new Response(
         JSON.stringify(data),
@@ -354,7 +655,11 @@ ${existingWebsite}
           status: status,
           headers: {
             "Content-Type":
-              "application/json",
+              "application/json; charset=UTF-8",
+
+            "Cache-Control":
+              "no-store",
+
             ...corsHeaders
           }
         }
