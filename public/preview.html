@@ -11,37 +11,48 @@
             box-sizing: border-box;
         }
 
+        html,
         body {
             margin: 0;
+            padding: 0;
             font-family: Arial, sans-serif;
             background: #0b0b10;
             color: white;
         }
+
+        body {
+            min-height: 100vh;
+        }
+
+        /* =========================
+           TOP BAR
+        ========================= */
 
         .topbar {
             min-height: 70px;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 10px;
+            gap: 15px;
             padding: 12px 20px;
             background: #111118;
             border-bottom: 1px solid #292932;
             position: sticky;
             top: 0;
-            z-index: 100;
+            z-index: 1000;
         }
 
         .logo {
-            font-size: 20px;
+            font-size: 21px;
             font-weight: bold;
+            white-space: nowrap;
         }
 
         .logo span {
             color: #9b5cff;
         }
 
-        .buttons {
+        .top-buttons {
             display: flex;
             gap: 10px;
         }
@@ -49,20 +60,32 @@
         button {
             border: none;
             cursor: pointer;
+            font-size: 14px;
             font-weight: bold;
-            border-radius: 10px;
-            padding: 11px 16px;
+            font-family: inherit;
         }
 
-        .back {
-            background: #24242d;
+        button:active {
+            transform: scale(0.98);
+        }
+
+        .back-btn {
+            background: #22222b;
             color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
         }
 
-        .download {
+        .download-btn {
             background: #9b5cff;
             color: white;
+            padding: 12px 18px;
+            border-radius: 10px;
         }
+
+        /* =========================
+           EDITOR
+        ========================= */
 
         .editor {
             padding: 18px;
@@ -70,22 +93,26 @@
             border-bottom: 1px solid #292932;
         }
 
+        .editor-inner {
+            max-width: 1100px;
+            margin: auto;
+        }
+
         .editor-title {
-            max-width: 1000px;
-            margin: 0 auto 10px;
+            font-size: 18px;
             font-weight: bold;
+            margin-bottom: 12px;
         }
 
         .edit-row {
-            max-width: 1000px;
-            margin: auto;
             display: flex;
             gap: 10px;
         }
 
         #editPrompt {
             flex: 1;
-            min-height: 55px;
+            min-height: 58px;
+            max-height: 220px;
             resize: vertical;
             padding: 15px;
             border-radius: 12px;
@@ -94,95 +121,173 @@
             color: white;
             outline: none;
             font-size: 15px;
+            line-height: 1.5;
+        }
+
+        #editPrompt::placeholder {
+            color: #8f8f9a;
         }
 
         #editPrompt:focus {
             border-color: #9b5cff;
+            box-shadow: 0 0 0 2px rgba(155, 92, 255, 0.12);
         }
 
         #editBtn {
             background: #9b5cff;
             color: white;
-            min-width: 140px;
+            padding: 0 22px;
+            border-radius: 12px;
+            min-width: 150px;
+            transition: 0.2s;
+        }
+
+        #editBtn:hover {
+            opacity: 0.92;
         }
 
         #editBtn:disabled {
-            opacity: 0.6;
+            opacity: 0.55;
+            cursor: not-allowed;
         }
+
+        /* =========================
+           STATUS
+        ========================= */
 
         #status {
             text-align: center;
-            color: #aaaab5;
-            min-height: 25px;
-            margin-top: 10px;
+            padding: 12px 5px 2px;
+            font-size: 14px;
+            color: #bdbdc8;
+            min-height: 35px;
+            line-height: 1.5;
+            word-break: break-word;
         }
 
-        .preview-area {
+        .success {
+            color: #6ee7a0 !important;
+        }
+
+        .error {
+            color: #ff7777 !important;
+        }
+
+        .loading {
+            color: #c9a9ff !important;
+        }
+
+        /* =========================
+           PREVIEW AREA
+        ========================= */
+
+        .preview-wrapper {
+            background: #222;
             padding: 20px;
-            background: #242424;
-            min-height: calc(100vh - 180px);
+            min-height: calc(100vh - 190px);
         }
 
-        .preview-box {
+        .preview-container {
+            background: white;
             width: 100%;
             max-width: 1400px;
             margin: auto;
-            background: white;
             border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0,0,0,.4);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
         }
 
         #websitePreview {
             width: 100%;
             height: 78vh;
+            min-height: 500px;
             border: none;
             display: block;
             background: white;
         }
 
+        /* =========================
+           EMPTY STATE
+        ========================= */
+
         .empty {
             min-height: 70vh;
             display: flex;
-            align-items: center;
-            justify-content: center;
             flex-direction: column;
+            justify-content: center;
+            align-items: center;
             text-align: center;
+            padding: 30px;
         }
 
-        .empty button {
+        .empty h2 {
+            font-size: 28px;
+            margin-bottom: 10px;
+        }
+
+        .empty p {
+            color: #aaa;
+            margin-bottom: 20px;
+            max-width: 500px;
+            line-height: 1.5;
+        }
+
+        .create-btn {
             background: #9b5cff;
             color: white;
+            padding: 13px 22px;
+            border-radius: 10px;
         }
+
+        /* =========================
+           MOBILE
+        ========================= */
 
         @media (max-width: 700px) {
 
             .topbar {
-                flex-wrap: wrap;
+                min-height: auto;
+                padding: 14px;
+                flex-direction: column;
+                align-items: stretch;
             }
 
-            .buttons {
+            .logo {
+                text-align: center;
+                font-size: 20px;
+            }
+
+            .top-buttons {
                 width: 100%;
             }
 
-            .buttons button {
+            .top-buttons button {
                 flex: 1;
+            }
+
+            .editor {
+                padding: 14px;
             }
 
             .edit-row {
                 flex-direction: column;
             }
 
-            #editBtn {
-                min-height: 50px;
+            #editPrompt {
+                min-height: 110px;
             }
 
-            .preview-area {
+            #editBtn {
+                min-height: 52px;
+            }
+
+            .preview-wrapper {
                 padding: 8px;
             }
 
             #websitePreview {
                 height: 72vh;
+                min-height: 450px;
             }
         }
     </style>
@@ -190,355 +295,627 @@
 
 <body>
 
-<header class="topbar">
+    <!-- =========================
+         TOP BAR
+    ========================= -->
 
-    <div class="logo">
-        ✨ WebCraft <span>AI</span>
-    </div>
+    <header class="topbar">
 
-    <div class="buttons">
+        <div class="logo">
+            ✨ WebCraft <span>AI</span>
+        </div>
 
-        <button
-            class="back"
-            onclick="goBack()">
-            ← Back
-        </button>
+        <div class="top-buttons">
 
-        <button
-            class="download"
-            onclick="downloadWebsite()">
-            📥 Download
-        </button>
+            <button
+                type="button"
+                class="back-btn"
+                onclick="goBack()">
+                ← Back
+            </button>
 
-    </div>
+            <button
+                type="button"
+                class="download-btn"
+                onclick="downloadWebsite()">
+                📥 Download
+            </button>
 
-</header>
+        </div>
+
+    </header>
 
 
-<section class="editor">
+    <!-- =========================
+         AI EDITOR
+    ========================= -->
 
-    <div class="editor-title">
-        ✏️ Edit your website with AI
-    </div>
+    <section class="editor">
 
-    <div class="edit-row">
+        <div class="editor-inner">
 
-        <textarea
-            id="editPrompt"
-            placeholder="Tell AI what you want to change...
+            <div class="editor-title">
+                ✏️ Edit your website with AI
+            </div>
+
+            <div class="edit-row">
+
+                <textarea
+                    id="editPrompt"
+                    placeholder="Tell AI what you want to change...
 
 Example:
 Change the colors to green and white.
 Add a WhatsApp button.
-Add a pricing section.
-Make the hero section more attractive."
-        ></textarea>
+Make the hero section more attractive.
+Add a pricing section."
+                ></textarea>
 
-        <button
-            id="editBtn"
-            onclick="editWebsite()">
-            ✨ Edit Website
-        </button>
+                <button
+                    type="button"
+                    id="editBtn"
+                    onclick="editWebsite()">
+                    ✨ Edit Website
+                </button>
 
-    </div>
+            </div>
 
-    <div id="status"></div>
+            <div id="status"></div>
 
-</section>
+        </div>
 
+    </section>
 
-<main class="preview-area">
 
-    <div
-        id="emptyState"
-        class="empty"
-        style="display:none;">
+    <!-- =========================
+         WEBSITE PREVIEW
+    ========================= -->
 
-        <h2>No website found</h2>
+    <main class="preview-wrapper">
 
-        <p>
-            Generate a website first.
-        </p>
+        <div
+            id="emptyState"
+            class="empty"
+            style="display:none;">
 
-        <button onclick="goBack()">
-            ✨ Create Website
-        </button>
+            <h2>No website found</h2>
 
-    </div>
+            <p>
+                Generate a website first before opening the preview.
+            </p>
 
+            <button
+                type="button"
+                class="create-btn"
+                onclick="goBack()">
+                ✨ Create Website
+            </button>
 
-    <div
-        id="previewBox"
-        class="preview-box">
+        </div>
 
-        <iframe
-            id="websitePreview"
-            title="Generated Website">
-        </iframe>
 
-    </div>
+        <div
+            id="previewContainer"
+            class="preview-container">
 
-</main>
+            <iframe
+                id="websitePreview"
+                title="Generated Website"
+                sandbox="allow-scripts allow-forms allow-modals allow-popups">
+            </iframe>
 
+        </div>
 
-<script>
+    </main>
 
-const AI_URL =
-    "https://webcraft-ai-1.lutaayacyrus76.workers.dev/";
 
+    <script>
 
-const preview =
-    document.getElementById("websitePreview");
+        /*
+         * =========================
+         * CONFIGURATION
+         * =========================
+         */
 
-const editPrompt =
-    document.getElementById("editPrompt");
+        const AI_URL =
+            "https://webcraft-ai-1.lutaayacyrus76.workers.dev/api/generate";
 
-const editBtn =
-    document.getElementById("editBtn");
 
-const status =
-    document.getElementById("status");
+        /*
+         * =========================
+         * ELEMENTS
+         * =========================
+         */
 
-const previewBox =
-    document.getElementById("previewBox");
+        const preview =
+            document.getElementById("websitePreview");
 
-const emptyState =
-    document.getElementById("emptyState");
+        const editPrompt =
+            document.getElementById("editPrompt");
 
+        const editBtn =
+            document.getElementById("editBtn");
 
-let website =
-    localStorage.getItem("generatedWebsite");
+        const status =
+            document.getElementById("status");
 
+        const previewContainer =
+            document.getElementById("previewContainer");
 
-/*
- * LOAD GENERATED WEBSITE
- */
+        const emptyState =
+            document.getElementById("emptyState");
 
-if (!website) {
 
-    previewBox.style.display = "none";
+        /*
+         * =========================
+         * LOAD WEBSITE
+         * =========================
+         */
 
-    emptyState.style.display = "flex";
+        let website =
+            localStorage.getItem("generatedWebsite");
 
-    status.textContent =
-        "⚠️ No generated website found.";
 
-} else {
+        if (!website) {
 
-    preview.srcdoc = website;
+            previewContainer.style.display =
+                "none";
 
-    status.textContent =
-        "✅ Website loaded.";
+            emptyState.style.display =
+                "flex";
 
-}
+            status.textContent =
+                "No generated website found.";
 
+        } else {
 
-/*
- * EDIT WEBSITE WITH AI
- */
+            previewContainer.style.display =
+                "block";
 
-async function editWebsite() {
+            emptyState.style.display =
+                "none";
 
-    const instruction =
-        editPrompt.value.trim();
+            preview.srcdoc =
+                website;
 
+        }
 
-    if (!instruction) {
 
-        status.textContent =
-            "⚠️ Tell the AI what you want to change.";
+        /*
+         * =========================
+         * SHOW STATUS
+         * =========================
+         */
 
-        return;
-    }
-
-
-    if (!website) {
-
-        status.textContent =
-            "❌ There is no website to edit.";
-
-        return;
-    }
-
-
-    editBtn.disabled = true;
-
-    editBtn.textContent =
-        "✨ Editing...";
-
-    status.textContent =
-        "🧠 AI is updating your website...";
-
-
-    try {
-
-        const response =
-            await fetch(AI_URL, {
-
-                method: "POST",
-
-                headers: {
-                    "Content-Type":
-                        "application/json"
-                },
-
-                body: JSON.stringify({
-
-                    mode: "edit",
-
-                    prompt: instruction,
-
-                    website: website
-
-                })
-
-            });
-
-
-        const data =
-            await response.json();
-
-
-        if (
-            !response.ok ||
-            !data.success
+        function showStatus(
+            message,
+            type = ""
         ) {
 
-            throw new Error(
-                data.error ||
-                "Website editing failed."
+            status.textContent =
+                message;
+
+            status.className =
+                type;
+
+        }
+
+
+        /*
+         * =========================
+         * EDIT WEBSITE
+         * =========================
+         */
+
+        async function editWebsite() {
+
+            const instruction =
+                editPrompt.value.trim();
+
+
+            /*
+             * Validate instruction
+             */
+
+            if (!instruction) {
+
+                showStatus(
+                    "⚠️ Tell the AI what you want to change.",
+                    "error"
+                );
+
+                editPrompt.focus();
+
+                return;
+
+            }
+
+
+            /*
+             * Validate website
+             */
+
+            if (!website) {
+
+                showStatus(
+                    "❌ No website is available to edit.",
+                    "error"
+                );
+
+                return;
+
+            }
+
+
+            /*
+             * Disable button
+             */
+
+            editBtn.disabled =
+                true;
+
+            editBtn.textContent =
+                "✨ Editing...";
+
+            showStatus(
+                "🧠 AI is updating your website...",
+                "loading"
+            );
+
+
+            try {
+
+                /*
+                 * Send request
+                 */
+
+                const response =
+                    await fetch(
+                        AI_URL,
+                        {
+                            method: "POST",
+
+                            headers: {
+                                "Content-Type":
+                                    "application/json",
+
+                                "Accept":
+                                    "application/json"
+                            },
+
+                            body: JSON.stringify({
+
+                                mode: "edit",
+
+                                prompt:
+                                    instruction,
+
+                                website:
+                                    website
+
+                            })
+                        }
+                    );
+
+
+                /*
+                 * IMPORTANT:
+                 *
+                 * Read the response as TEXT first.
+                 *
+                 * This prevents:
+                 *
+                 * Unexpected end of JSON input
+                 */
+
+                const responseText =
+                    await response.text();
+
+
+                console.log(
+                    "SERVER STATUS:",
+                    response.status
+                );
+
+                console.log(
+                    "SERVER RESPONSE:",
+                    responseText
+                );
+
+
+                /*
+                 * Check for empty response
+                 */
+
+                if (!responseText.trim()) {
+
+                    throw new Error(
+                        "The server returned an empty response. HTTP status: " +
+                        response.status
+                    );
+
+                }
+
+
+                /*
+                 * Convert response to JSON
+                 */
+
+                let data;
+
+                try {
+
+                    data =
+                        JSON.parse(
+                            responseText
+                        );
+
+                } catch (jsonError) {
+
+                    /*
+                     * Server returned something
+                     * that wasn't JSON.
+                     */
+
+                    throw new Error(
+                        "Server returned an invalid response. HTTP status: " +
+                        response.status
+                    );
+
+                }
+
+
+                /*
+                 * Check API success
+                 */
+
+                if (
+                    !response.ok ||
+                    !data ||
+                    data.success !== true
+                ) {
+
+                    throw new Error(
+                        (
+                            data &&
+                            data.error
+                        )
+                            ? data.error
+                            : "Website editing failed."
+                    );
+
+                }
+
+
+                /*
+                 * Validate returned website
+                 */
+
+                if (
+                    !data.website ||
+                    typeof data.website !== "string"
+                ) {
+
+                    throw new Error(
+                        "AI did not return a valid website."
+                    );
+
+                }
+
+
+                if (
+                    data.website.length < 50
+                ) {
+
+                    throw new Error(
+                        "AI returned an incomplete website."
+                    );
+
+                }
+
+
+                /*
+                 * UPDATE WEBSITE
+                 */
+
+                website =
+                    data.website;
+
+
+                /*
+                 * SAVE WEBSITE
+                 */
+
+                localStorage.setItem(
+                    "generatedWebsite",
+                    website
+                );
+
+
+                /*
+                 * Save latest instruction
+                 */
+
+                localStorage.setItem(
+                    "websitePrompt",
+                    instruction
+                );
+
+
+                /*
+                 * UPDATE PREVIEW
+                 */
+
+                preview.srcdoc =
+                    website;
+
+
+                /*
+                 * Clear prompt
+                 */
+
+                editPrompt.value =
+                    "";
+
+
+                /*
+                 * Success
+                 */
+
+                showStatus(
+                    "✅ Website updated successfully!",
+                    "success"
+                );
+
+
+            } catch (error) {
+
+                console.error(
+                    "EDIT ERROR:",
+                    error
+                );
+
+
+                showStatus(
+                    "❌ " +
+                    (
+                        error.message ||
+                        "Website editing failed."
+                    ),
+                    "error"
+                );
+
+
+            } finally {
+
+                /*
+                 * Re-enable button
+                 */
+
+                editBtn.disabled =
+                    false;
+
+                editBtn.textContent =
+                    "✨ Edit Website";
+
+            }
+
+        }
+
+
+        /*
+         * =========================
+         * DOWNLOAD WEBSITE
+         * =========================
+         */
+
+        function downloadWebsite() {
+
+            if (!website) {
+
+                alert(
+                    "No website available to download."
+                );
+
+                return;
+
+            }
+
+
+            const blob =
+                new Blob(
+                    [website],
+                    {
+                        type:
+                            "text/html;charset=utf-8"
+                    }
+                );
+
+
+            const url =
+                URL.createObjectURL(
+                    blob
+                );
+
+
+            const link =
+                document.createElement(
+                    "a"
+                );
+
+
+            link.href =
+                url;
+
+            link.download =
+                "webcraft-website.html";
+
+
+            document.body.appendChild(
+                link
+            );
+
+            link.click();
+
+
+            document.body.removeChild(
+                link
+            );
+
+
+            setTimeout(
+                function () {
+
+                    URL.revokeObjectURL(
+                        url
+                    );
+
+                },
+                1000
             );
 
         }
 
 
-        website =
-            data.website;
+        /*
+         * =========================
+         * BACK TO CREATOR
+         * =========================
+         */
 
+        function goBack() {
 
-        localStorage.setItem(
-            "generatedWebsite",
-            website
-        );
-
-
-        preview.srcdoc =
-            website;
-
-
-        editPrompt.value = "";
-
-
-        status.textContent =
-            "✅ Website updated successfully!";
-
-    }
-
-    catch (error) {
-
-        console.error(error);
-
-        status.textContent =
-            "❌ " + error.message;
-
-    }
-
-    finally {
-
-        editBtn.disabled = false;
-
-        editBtn.textContent =
-            "✨ Edit Website";
-
-    }
-
-}
-
-
-/*
- * DOWNLOAD WEBSITE
- */
-
-function downloadWebsite() {
-
-    if (!website) {
-
-        alert(
-            "No website available to download."
-        );
-
-        return;
-    }
-
-
-    const blob =
-        new Blob(
-            [website],
-            {
-                type: "text/html"
-            }
-        );
-
-
-    const url =
-        URL.createObjectURL(blob);
-
-
-    const link =
-        document.createElement("a");
-
-
-    link.href = url;
-
-    link.download =
-        "webcraft-website.html";
-
-
-    document.body.appendChild(link);
-
-    link.click();
-
-    document.body.removeChild(link);
-
-
-    URL.revokeObjectURL(url);
-
-}
-
-
-/*
- * BACK
- */
-
-function goBack() {
-
-    window.location.href =
-        "/";
-
-}
-
-
-/*
- * CTRL + ENTER
- */
-
-editPrompt.addEventListener(
-    "keydown",
-    function(event) {
-
-        if (
-            event.ctrlKey &&
-            event.key === "Enter"
-        ) {
-
-            editWebsite();
+            window.location.href =
+                "index.html";
 
         }
 
-    }
-);
 
-</script>
+        /*
+         * =========================
+         * CTRL + ENTER
+         * =========================
+         */
+
+        editPrompt.addEventListener(
+            "keydown",
+            function(event) {
+
+                if (
+                    event.ctrlKey &&
+                    event.key === "Enter"
+                ) {
+
+                    event.preventDefault();
+
+                    editWebsite();
+
+                }
+
+            }
+        );
+
+    </script>
 
 </body>
-</html>
+    </html>
