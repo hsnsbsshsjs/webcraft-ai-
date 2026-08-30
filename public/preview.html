@@ -3,7 +3,6 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>WebCraft AI - Preview</title>
 
     <style>
@@ -84,7 +83,7 @@
         }
 
         /* =========================
-           EDITOR
+           AI EDITOR
         ========================= */
 
         .editor {
@@ -130,7 +129,6 @@
 
         #editPrompt:focus {
             border-color: #9b5cff;
-            box-shadow: 0 0 0 2px rgba(155, 92, 255, 0.12);
         }
 
         #editBtn {
@@ -139,11 +137,6 @@
             padding: 0 22px;
             border-radius: 12px;
             min-width: 150px;
-            transition: 0.2s;
-        }
-
-        #editBtn:hover {
-            opacity: 0.92;
         }
 
         #editBtn:disabled {
@@ -178,32 +171,99 @@
         }
 
         /* =========================
+           DEVICE TOOLBAR
+        ========================= */
+
+        .device-toolbar {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 12px;
+            background: #17171f;
+            border-bottom: 1px solid #292932;
+            flex-wrap: wrap;
+        }
+
+        .device-btn {
+            background: #25252f;
+            color: #cfcfd8;
+            padding: 9px 16px;
+            border-radius: 8px;
+            border: 1px solid #363642;
+            transition: 0.2s;
+        }
+
+        .device-btn:hover {
+            background: #30303b;
+        }
+
+        .device-btn.active {
+            background: #9b5cff;
+            color: white;
+            border-color: #9b5cff;
+        }
+
+        .device-label {
+            color: #888894;
+            font-size: 12px;
+            margin-left: 8px;
+        }
+
+        /* =========================
            PREVIEW AREA
         ========================= */
 
         .preview-wrapper {
             background: #222;
-            padding: 20px;
-            min-height: calc(100vh - 190px);
+            min-height: calc(100vh - 300px);
+            padding: 25px 15px 40px;
+            overflow-x: auto;
+        }
+
+        .preview-stage {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
         }
 
         .preview-container {
             background: white;
-            width: 100%;
-            max-width: 1400px;
-            margin: auto;
-            border-radius: 12px;
             overflow: hidden;
-            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
+            transition:
+                width 0.3s ease,
+                border-radius 0.3s ease;
         }
 
         #websitePreview {
             width: 100%;
-            height: 78vh;
+            height: 75vh;
             min-height: 500px;
             border: none;
             display: block;
             background: white;
+        }
+
+        /* DEVICE SIZES */
+
+        .preview-container.desktop {
+            width: 100%;
+            max-width: 1400px;
+            border-radius: 12px;
+        }
+
+        .preview-container.tablet {
+            width: 768px;
+            max-width: 100%;
+            border-radius: 12px;
+        }
+
+        .preview-container.mobile {
+            width: 390px;
+            max-width: 100%;
+            border-radius: 18px;
         }
 
         /* =========================
@@ -211,7 +271,7 @@
         ========================= */
 
         .empty {
-            min-height: 70vh;
+            min-height: 65vh;
             display: flex;
             flex-direction: column;
             justify-content: center;
@@ -228,8 +288,6 @@
         .empty p {
             color: #aaa;
             margin-bottom: 20px;
-            max-width: 500px;
-            line-height: 1.5;
         }
 
         .create-btn {
@@ -281,13 +339,35 @@
                 min-height: 52px;
             }
 
+            .device-toolbar {
+                gap: 6px;
+                padding: 10px;
+            }
+
+            .device-btn {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            .device-label {
+                display: none;
+            }
+
             .preview-wrapper {
-                padding: 8px;
+                padding: 15px 8px 30px;
             }
 
             #websitePreview {
-                height: 72vh;
+                height: 70vh;
                 min-height: 450px;
+            }
+
+            .preview-container.mobile {
+                width: 390px;
+            }
+
+            .preview-container.tablet {
+                width: 768px;
             }
         }
     </style>
@@ -368,6 +448,45 @@ Add a pricing section."
 
 
     <!-- =========================
+         DEVICE TOOLBAR
+    ========================= -->
+
+    <div class="device-toolbar">
+
+        <button
+            type="button"
+            class="device-btn active"
+            id="desktopBtn"
+            onclick="setDevice('desktop')">
+            🖥️ Desktop
+        </button>
+
+        <button
+            type="button"
+            class="device-btn"
+            id="tabletBtn"
+            onclick="setDevice('tablet')">
+            📱 Tablet
+        </button>
+
+        <button
+            type="button"
+            class="device-btn"
+            id="mobileBtn"
+            onclick="setDevice('mobile')">
+            📱 Mobile
+        </button>
+
+        <span
+            class="device-label"
+            id="deviceLabel">
+            Desktop — 1400px
+        </span>
+
+    </div>
+
+
+    <!-- =========================
          WEBSITE PREVIEW
     ========================= -->
 
@@ -395,14 +514,20 @@ Add a pricing section."
 
 
         <div
-            id="previewContainer"
-            class="preview-container">
+            id="previewStage"
+            class="preview-stage">
 
-            <iframe
-                id="websitePreview"
-                title="Generated Website"
-                sandbox="allow-scripts allow-forms allow-modals allow-popups">
-            </iframe>
+            <div
+                id="previewContainer"
+                class="preview-container desktop">
+
+                <iframe
+                    id="websitePreview"
+                    title="Generated Website"
+                    sandbox="allow-scripts allow-forms allow-modals allow-popups">
+                </iframe>
+
+            </div>
 
         </div>
 
@@ -428,22 +553,44 @@ Add a pricing section."
          */
 
         const preview =
-            document.getElementById("websitePreview");
+            document.getElementById(
+                "websitePreview"
+            );
 
         const editPrompt =
-            document.getElementById("editPrompt");
+            document.getElementById(
+                "editPrompt"
+            );
 
         const editBtn =
-            document.getElementById("editBtn");
+            document.getElementById(
+                "editBtn"
+            );
 
         const status =
-            document.getElementById("status");
+            document.getElementById(
+                "status"
+            );
 
         const previewContainer =
-            document.getElementById("previewContainer");
+            document.getElementById(
+                "previewContainer"
+            );
+
+        const previewStage =
+            document.getElementById(
+                "previewStage"
+            );
 
         const emptyState =
-            document.getElementById("emptyState");
+            document.getElementById(
+                "emptyState"
+            );
+
+        const deviceLabel =
+            document.getElementById(
+                "deviceLabel"
+            );
 
 
         /*
@@ -453,24 +600,28 @@ Add a pricing section."
          */
 
         let website =
-            localStorage.getItem("generatedWebsite");
+            localStorage.getItem(
+                "generatedWebsite"
+            );
 
 
         if (!website) {
 
-            previewContainer.style.display =
+            previewStage.style.display =
                 "none";
 
             emptyState.style.display =
                 "flex";
 
-            status.textContent =
-                "No generated website found.";
+            showStatus(
+                "No generated website found.",
+                ""
+            );
 
         } else {
 
-            previewContainer.style.display =
-                "block";
+            previewStage.style.display =
+                "flex";
 
             emptyState.style.display =
                 "none";
@@ -483,7 +634,7 @@ Add a pricing section."
 
         /*
          * =========================
-         * SHOW STATUS
+         * STATUS
          * =========================
          */
 
@@ -503,6 +654,93 @@ Add a pricing section."
 
         /*
          * =========================
+         * DEVICE PREVIEW
+         * =========================
+         */
+
+        function setDevice(device) {
+
+            /*
+             * Remove current device
+             */
+
+            previewContainer.classList.remove(
+                "desktop",
+                "tablet",
+                "mobile"
+            );
+
+
+            /*
+             * Add selected device
+             */
+
+            previewContainer.classList.add(
+                device
+            );
+
+
+            /*
+             * Buttons
+             */
+
+            document
+                .getElementById("desktopBtn")
+                .classList.remove("active");
+
+            document
+                .getElementById("tabletBtn")
+                .classList.remove("active");
+
+            document
+                .getElementById("mobileBtn")
+                .classList.remove("active");
+
+
+            /*
+             * Device label
+             */
+
+            if (device === "desktop") {
+
+                document
+                    .getElementById("desktopBtn")
+                    .classList.add("active");
+
+                deviceLabel.textContent =
+                    "Desktop — 1400px";
+
+            }
+
+
+            if (device === "tablet") {
+
+                document
+                    .getElementById("tabletBtn")
+                    .classList.add("active");
+
+                deviceLabel.textContent =
+                    "Tablet — 768px";
+
+            }
+
+
+            if (device === "mobile") {
+
+                document
+                    .getElementById("mobileBtn")
+                    .classList.add("active");
+
+                deviceLabel.textContent =
+                    "Mobile — 390px";
+
+            }
+
+        }
+
+
+        /*
+         * =========================
          * EDIT WEBSITE
          * =========================
          */
@@ -512,10 +750,6 @@ Add a pricing section."
             const instruction =
                 editPrompt.value.trim();
 
-
-            /*
-             * Validate instruction
-             */
 
             if (!instruction) {
 
@@ -531,10 +765,6 @@ Add a pricing section."
             }
 
 
-            /*
-             * Validate website
-             */
-
             if (!website) {
 
                 showStatus(
@@ -547,15 +777,12 @@ Add a pricing section."
             }
 
 
-            /*
-             * Disable button
-             */
-
             editBtn.disabled =
                 true;
 
             editBtn.textContent =
                 "✨ Editing...";
+
 
             showStatus(
                 "🧠 AI is updating your website...",
@@ -564,10 +791,6 @@ Add a pricing section."
 
 
             try {
-
-                /*
-                 * Send request
-                 */
 
                 const response =
                     await fetch(
@@ -599,13 +822,7 @@ Add a pricing section."
 
 
                 /*
-                 * IMPORTANT:
-                 *
-                 * Read the response as TEXT first.
-                 *
-                 * This prevents:
-                 *
-                 * Unexpected end of JSON input
+                 * Read as text first.
                  */
 
                 const responseText =
@@ -623,11 +840,9 @@ Add a pricing section."
                 );
 
 
-                /*
-                 * Check for empty response
-                 */
-
-                if (!responseText.trim()) {
+                if (
+                    !responseText.trim()
+                ) {
 
                     throw new Error(
                         "The server returned an empty response. HTTP status: " +
@@ -637,11 +852,8 @@ Add a pricing section."
                 }
 
 
-                /*
-                 * Convert response to JSON
-                 */
-
                 let data;
+
 
                 try {
 
@@ -652,11 +864,6 @@ Add a pricing section."
 
                 } catch (jsonError) {
 
-                    /*
-                     * Server returned something
-                     * that wasn't JSON.
-                     */
-
                     throw new Error(
                         "Server returned an invalid response. HTTP status: " +
                         response.status
@@ -665,10 +872,6 @@ Add a pricing section."
                 }
 
 
-                /*
-                 * Check API success
-                 */
-
                 if (
                     !response.ok ||
                     !data ||
@@ -676,20 +879,14 @@ Add a pricing section."
                 ) {
 
                     throw new Error(
-                        (
-                            data &&
-                            data.error
-                        )
+                        data &&
+                        data.error
                             ? data.error
                             : "Website editing failed."
                     );
 
                 }
 
-
-                /*
-                 * Validate returned website
-                 */
 
                 if (
                     !data.website ||
@@ -732,10 +929,6 @@ Add a pricing section."
                 );
 
 
-                /*
-                 * Save latest instruction
-                 */
-
                 localStorage.setItem(
                     "websitePrompt",
                     instruction
@@ -751,171 +944,5 @@ Add a pricing section."
 
 
                 /*
-                 * Clear prompt
-                 */
-
-                editPrompt.value =
-                    "";
-
-
-                /*
-                 * Success
-                 */
-
-                showStatus(
-                    "✅ Website updated successfully!",
-                    "success"
-                );
-
-
-            } catch (error) {
-
-                console.error(
-                    "EDIT ERROR:",
-                    error
-                );
-
-
-                showStatus(
-                    "❌ " +
-                    (
-                        error.message ||
-                        "Website editing failed."
-                    ),
-                    "error"
-                );
-
-
-            } finally {
-
-                /*
-                 * Re-enable button
-                 */
-
-                editBtn.disabled =
-                    false;
-
-                editBtn.textContent =
-                    "✨ Edit Website";
-
-            }
-
-        }
-
-
-        /*
-         * =========================
-         * DOWNLOAD WEBSITE
-         * =========================
-         */
-
-        function downloadWebsite() {
-
-            if (!website) {
-
-                alert(
-                    "No website available to download."
-                );
-
-                return;
-
-            }
-
-
-            const blob =
-                new Blob(
-                    [website],
-                    {
-                        type:
-                            "text/html;charset=utf-8"
-                    }
-                );
-
-
-            const url =
-                URL.createObjectURL(
-                    blob
-                );
-
-
-            const link =
-                document.createElement(
-                    "a"
-                );
-
-
-            link.href =
-                url;
-
-            link.download =
-                "webcraft-website.html";
-
-
-            document.body.appendChild(
-                link
-            );
-
-            link.click();
-
-
-            document.body.removeChild(
-                link
-            );
-
-
-            setTimeout(
-                function () {
-
-                    URL.revokeObjectURL(
-                        url
-                    );
-
-                },
-                1000
-            );
-
-        }
-
-
-        /*
-         * =========================
-         * BACK TO CREATOR
-         * =========================
-         */
-
-        function goBack() {
-
-            window.location.href =
-                "index.html";
-
-        }
-
-
-        /*
-         * =========================
-         * CTRL + ENTER
-         * =========================
-         */
-
-        editPrompt.addEventListener(
-            "keydown",
-            function(event) {
-
-                if (
-                    event.ctrlKey &&
-                    event.key === "Enter"
-                ) {
-
-                    event.preventDefault();
-
-                    editWebsite();
-
-                }
-
-            }
-        );
-
-    </script>
-
-</body>
-    </html>
+                 * Clear input
+        
