@@ -1,948 +1,958 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebCraft AI - Preview</title>
-
-    <style>
-        * {
-            box-sizing: border-box;
-        }
-
-        html,
-        body {
-            margin: 0;
-            padding: 0;
-            font-family: Arial, sans-serif;
-            background: #0b0b10;
-            color: white;
-        }
-
-        body {
-            min-height: 100vh;
-        }
-
-        /* =========================
-           TOP BAR
-        ========================= */
-
-        .topbar {
-            min-height: 70px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            gap: 15px;
-            padding: 12px 20px;
-            background: #111118;
-            border-bottom: 1px solid #292932;
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-        }
-
-        .logo {
-            font-size: 21px;
-            font-weight: bold;
-            white-space: nowrap;
-        }
-
-        .logo span {
-            color: #9b5cff;
-        }
-
-        .top-buttons {
-            display: flex;
-            gap: 10px;
-        }
-
-        button {
-            border: none;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: bold;
-            font-family: inherit;
-        }
-
-        button:active {
-            transform: scale(0.98);
-        }
-
-        .back-btn {
-            background: #22222b;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 10px;
-        }
-
-        .download-btn {
-            background: #9b5cff;
-            color: white;
-            padding: 12px 18px;
-            border-radius: 10px;
-        }
-
-        /* =========================
-           AI EDITOR
-        ========================= */
-
-        .editor {
-            padding: 18px;
-            background: #111118;
-            border-bottom: 1px solid #292932;
-        }
-
-        .editor-inner {
-            max-width: 1100px;
-            margin: auto;
-        }
-
-        .editor-title {
-            font-size: 18px;
-            font-weight: bold;
-            margin-bottom: 12px;
-        }
-
-        .edit-row {
-            display: flex;
-            gap: 10px;
-        }
-
-        #editPrompt {
-            flex: 1;
-            min-height: 58px;
-            max-height: 220px;
-            resize: vertical;
-            padding: 15px;
-            border-radius: 12px;
-            border: 1px solid #34343e;
-            background: #191920;
-            color: white;
-            outline: none;
-            font-size: 15px;
-            line-height: 1.5;
-        }
-
-        #editPrompt::placeholder {
-            color: #8f8f9a;
-        }
-
-        #editPrompt:focus {
-            border-color: #9b5cff;
-        }
-
-        #editBtn {
-            background: #9b5cff;
-            color: white;
-            padding: 0 22px;
-            border-radius: 12px;
-            min-width: 150px;
-        }
-
-        #editBtn:disabled {
-            opacity: 0.55;
-            cursor: not-allowed;
-        }
-
-        /* =========================
-           STATUS
-        ========================= */
-
-        #status {
-            text-align: center;
-            padding: 12px 5px 2px;
-            font-size: 14px;
-            color: #bdbdc8;
-            min-height: 35px;
-            line-height: 1.5;
-            word-break: break-word;
-        }
-
-        .success {
-            color: #6ee7a0 !important;
-        }
-
-        .error {
-            color: #ff7777 !important;
-        }
-
-        .loading {
-            color: #c9a9ff !important;
-        }
-
-        /* =========================
-           DEVICE TOOLBAR
-        ========================= */
-
-        .device-toolbar {
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            gap: 8px;
-            padding: 12px;
-            background: #17171f;
-            border-bottom: 1px solid #292932;
-            flex-wrap: wrap;
-        }
-
-        .device-btn {
-            background: #25252f;
-            color: #cfcfd8;
-            padding: 9px 16px;
-            border-radius: 8px;
-            border: 1px solid #363642;
-            transition: 0.2s;
-        }
-
-        .device-btn:hover {
-            background: #30303b;
-        }
-
-        .device-btn.active {
-            background: #9b5cff;
-            color: white;
-            border-color: #9b5cff;
-        }
-
-        .device-label {
-            color: #888894;
-            font-size: 12px;
-            margin-left: 8px;
-        }
-
-        /* =========================
-           PREVIEW AREA
-        ========================= */
-
-        .preview-wrapper {
-            background: #222;
-            min-height: calc(100vh - 300px);
-            padding: 25px 15px 40px;
-            overflow-x: auto;
-        }
-
-        .preview-stage {
-            width: 100%;
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-        }
-
-        .preview-container {
-            background: white;
-            overflow: hidden;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5);
-            transition:
-                width 0.3s ease,
-                border-radius 0.3s ease;
-        }
-
-        #websitePreview {
-            width: 100%;
-            height: 75vh;
-            min-height: 500px;
-            border: none;
-            display: block;
-            background: white;
-        }
-
-        /* DEVICE SIZES */
-
-        .preview-container.desktop {
-            width: 100%;
-            max-width: 1400px;
-            border-radius: 12px;
-        }
-
-        .preview-container.tablet {
-            width: 768px;
-            max-width: 100%;
-            border-radius: 12px;
-        }
-
-        .preview-container.mobile {
-            width: 390px;
-            max-width: 100%;
-            border-radius: 18px;
-        }
-
-        /* =========================
-           EMPTY STATE
-        ========================= */
-
-        .empty {
-            min-height: 65vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            padding: 30px;
-        }
-
-        .empty h2 {
-            font-size: 28px;
-            margin-bottom: 10px;
-        }
-
-        .empty p {
-            color: #aaa;
-            margin-bottom: 20px;
-        }
-
-        .create-btn {
-            background: #9b5cff;
-            color: white;
-            padding: 13px 22px;
-            border-radius: 10px;
-        }
-
-        /* =========================
-           MOBILE
-        ========================= */
-
-        @media (max-width: 700px) {
-
-            .topbar {
-                min-height: auto;
-                padding: 14px;
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .logo {
-                text-align: center;
-                font-size: 20px;
-            }
-
-            .top-buttons {
-                width: 100%;
-            }
-
-            .top-buttons button {
-                flex: 1;
-            }
-
-            .editor {
-                padding: 14px;
-            }
-
-            .edit-row {
-                flex-direction: column;
-            }
-
-            #editPrompt {
-                min-height: 110px;
-            }
-
-            #editBtn {
-                min-height: 52px;
-            }
-
-            .device-toolbar {
-                gap: 6px;
-                padding: 10px;
-            }
-
-            .device-btn {
-                padding: 8px 12px;
-                font-size: 12px;
-            }
-
-            .device-label {
-                display: none;
-            }
-
-            .preview-wrapper {
-                padding: 15px 8px 30px;
-            }
-
-            #websitePreview {
-                height: 70vh;
-                min-height: 450px;
-            }
-
-            .preview-container.mobile {
-                width: 390px;
-            }
-
-            .preview-container.tablet {
-                width: 768px;
-            }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebCraft AI - Preview</title>
+
+<style>
+* {
+    box-sizing: border-box;
+}
+
+html,
+body {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: #0b0b10;
+    color: white;
+}
+
+body {
+    min-height: 100vh;
+}
+
+button,
+textarea {
+    font-family: inherit;
+}
+
+button {
+    border: none;
+    cursor: pointer;
+    font-weight: 700;
+}
+
+button:active {
+    transform: scale(.98);
+}
+
+/* TOP BAR */
+
+.topbar {
+    min-height: 70px;
+    padding: 12px 20px;
+    background: #111118;
+    border-bottom: 1px solid #292932;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+
+.logo {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+.logo span {
+    color: #9b5cff;
+}
+
+.top-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.back-btn,
+.download-btn {
+    padding: 13px 22px;
+    border-radius: 11px;
+    color: white;
+    font-size: 15px;
+}
+
+.back-btn {
+    background: #24242d;
+}
+
+.download-btn {
+    background: #9b5cff;
+}
+
+/* EDITOR */
+
+.editor {
+    background: #111118;
+    border-bottom: 1px solid #292932;
+    padding: 20px;
+}
+
+.editor-inner {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.editor-title {
+    font-size: 20px;
+    font-weight: 800;
+    margin-bottom: 14px;
+}
+
+.edit-row {
+    display: flex;
+    gap: 12px;
+}
+
+#editPrompt {
+    flex: 1;
+    min-height: 100px;
+    max-height: 250px;
+    resize: vertical;
+    padding: 15px;
+    border-radius: 12px;
+    border: 1px solid #34343e;
+    background: #191920;
+    color: white;
+    outline: none;
+    font-size: 15px;
+    line-height: 1.5;
+}
+
+#editPrompt:focus {
+    border-color: #9b5cff;
+}
+
+#editPrompt::placeholder {
+    color: #858590;
+}
+
+#editBtn {
+    min-width: 170px;
+    border-radius: 12px;
+    background: #9b5cff;
+    color: white;
+    font-size: 15px;
+    padding: 15px 20px;
+}
+
+#editBtn:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+}
+
+#status {
+    min-height: 30px;
+    padding-top: 12px;
+    text-align: center;
+    font-size: 14px;
+}
+
+.status-success {
+    color: #6ee7a0;
+}
+
+.status-error {
+    color: #ff7777;
+}
+
+.status-loading {
+    color: #c9a9ff;
+}
+
+/* DEVICES */
+
+.device-toolbar {
+    padding: 12px;
+    background: #17171f;
+    border-bottom: 1px solid #292932;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.device-btn {
+    background: #25252f;
+    border: 1px solid #363642;
+    color: #d0d0d8;
+    padding: 10px 17px;
+    border-radius: 9px;
+}
+
+.device-btn.active {
+    background: #9b5cff;
+    color: white;
+    border-color: #9b5cff;
+}
+
+.device-label {
+    color: #888894;
+    font-size: 12px;
+    margin-left: 8px;
+}
+
+/* PREVIEW */
+
+.preview-wrapper {
+    min-height: calc(100vh - 300px);
+    background: #222;
+    padding: 25px 15px 50px;
+    overflow-x: auto;
+}
+
+.preview-stage {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+}
+
+.preview-container {
+    background: white;
+    overflow: hidden;
+    box-shadow: 0 15px 50px rgba(0,0,0,.5);
+    transition: width .25s ease;
+}
+
+.preview-container.desktop {
+    width: 100%;
+    max-width: 1400px;
+    border-radius: 12px;
+}
+
+.preview-container.tablet {
+    width: 768px;
+    max-width: 100%;
+    border-radius: 12px;
+}
+
+.preview-container.mobile {
+    width: 390px;
+    max-width: 100%;
+    border-radius: 18px;
+}
+
+#websitePreview {
+    display: block;
+    width: 100%;
+    height: 75vh;
+    min-height: 500px;
+    border: none;
+    background: white;
+}
+
+/* EMPTY */
+
+.empty {
+    min-height: 65vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}
+
+.empty h2 {
+    font-size: 28px;
+}
+
+.empty p {
+    color: #aaa;
+}
+
+.create-btn {
+    background: #9b5cff;
+    color: white;
+    padding: 13px 22px;
+    border-radius: 10px;
+}
+
+/* MOBILE */
+
+@media (max-width: 700px) {
+
+    .topbar {
+        flex-direction: column;
+        padding: 14px;
+    }
+
+    .logo {
+        text-align: center;
+    }
+
+    .top-buttons {
+        width: 100%;
+    }
+
+    .top-buttons button {
+        flex: 1;
+    }
+
+    .editor {
+        padding: 14px;
+    }
+
+    .edit-row {
+        flex-direction: column;
+    }
+
+    #editPrompt {
+        min-height: 120px;
+    }
+
+    #editBtn {
+        min-height: 52px;
+    }
+
+    .preview-wrapper {
+        padding: 15px 8px 30px;
+    }
+
+    #websitePreview {
+        height: 70vh;
+        min-height: 450px;
+    }
+}
+</style>
 </head>
 
 <body>
 
-    <!-- =========================
-         TOP BAR
-    ========================= -->
+<header class="topbar">
 
-    <header class="topbar">
+    <div class="logo">
+        ✨ WebCraft <span>AI</span>
+    </div>
 
-        <div class="logo">
-            ✨ WebCraft <span>AI</span>
+    <div class="top-buttons">
+
+        <button
+            type="button"
+            class="back-btn"
+            onclick="goBack()">
+            ← Back
+        </button>
+
+        <button
+            type="button"
+            class="download-btn"
+            onclick="downloadWebsite()">
+            📥 Download
+        </button>
+
+    </div>
+
+</header>
+
+
+<section class="editor">
+
+    <div class="editor-inner">
+
+        <div class="editor-title">
+            ✏️ Edit your website with AI
         </div>
 
-        <div class="top-buttons">
+        <div class="edit-row">
 
-            <button
-                type="button"
-                class="back-btn"
-                onclick="goBack()">
-                ← Back
-            </button>
-
-            <button
-                type="button"
-                class="download-btn"
-                onclick="downloadWebsite()">
-                📥 Download
-            </button>
-
-        </div>
-
-    </header>
-
-
-    <!-- =========================
-         AI EDITOR
-    ========================= -->
-
-    <section class="editor">
-
-        <div class="editor-inner">
-
-            <div class="editor-title">
-                ✏️ Edit your website with AI
-            </div>
-
-            <div class="edit-row">
-
-                <textarea
-                    id="editPrompt"
-                    placeholder="Tell AI what you want to change...
+            <textarea
+                id="editPrompt"
+                placeholder="Tell AI what you want to change...
 
 Example:
 Change the colors to green and white.
 Add a WhatsApp button.
 Make the hero section more attractive.
-Add a pricing section."
-                ></textarea>
-
-                <button
-                    type="button"
-                    id="editBtn"
-                    onclick="editWebsite()">
-                    ✨ Edit Website
-                </button>
-
-            </div>
-
-            <div id="status"></div>
-
-        </div>
-
-    </section>
-
-
-    <!-- =========================
-         DEVICE TOOLBAR
-    ========================= -->
-
-    <div class="device-toolbar">
-
-        <button
-            type="button"
-            class="device-btn active"
-            id="desktopBtn"
-            onclick="setDevice('desktop')">
-            🖥️ Desktop
-        </button>
-
-        <button
-            type="button"
-            class="device-btn"
-            id="tabletBtn"
-            onclick="setDevice('tablet')">
-            📱 Tablet
-        </button>
-
-        <button
-            type="button"
-            class="device-btn"
-            id="mobileBtn"
-            onclick="setDevice('mobile')">
-            📱 Mobile
-        </button>
-
-        <span
-            class="device-label"
-            id="deviceLabel">
-            Desktop — 1400px
-        </span>
-
-    </div>
-
-
-    <!-- =========================
-         WEBSITE PREVIEW
-    ========================= -->
-
-    <main class="preview-wrapper">
-
-        <div
-            id="emptyState"
-            class="empty"
-            style="display:none;">
-
-            <h2>No website found</h2>
-
-            <p>
-                Generate a website first before opening the preview.
-            </p>
+Add a pricing section."></textarea>
 
             <button
                 type="button"
-                class="create-btn"
-                onclick="goBack()">
-                ✨ Create Website
+                id="editBtn"
+                onclick="editWebsite()">
+                ✨ Edit Website
             </button>
 
         </div>
 
+        <div id="status"></div>
+
+    </div>
+
+</section>
+
+
+<div class="device-toolbar">
+
+    <button
+        type="button"
+        class="device-btn active"
+        id="desktopBtn"
+        onclick="setDevice('desktop')">
+        🖥️ Desktop
+    </button>
+
+    <button
+        type="button"
+        class="device-btn"
+        id="tabletBtn"
+        onclick="setDevice('tablet')">
+        📱 Tablet
+    </button>
+
+    <button
+        type="button"
+        class="device-btn"
+        id="mobileBtn"
+        onclick="setDevice('mobile')">
+        📱 Mobile
+    </button>
+
+    <span
+        class="device-label"
+        id="deviceLabel">
+        Desktop — 1400px
+    </span>
+
+</div>
+
+
+<main class="preview-wrapper">
+
+    <div
+        id="emptyState"
+        class="empty"
+        style="display:none;">
+
+        <h2>No website found</h2>
+
+        <p>
+            Generate a website first before opening the preview.
+        </p>
+
+        <button
+            type="button"
+            class="create-btn"
+            onclick="goBack()">
+            ✨ Create Website
+        </button>
+
+    </div>
+
+
+    <div
+        id="previewStage"
+        class="preview-stage">
 
         <div
-            id="previewStage"
-            class="preview-stage">
+            id="previewContainer"
+            class="preview-container desktop">
 
-            <div
-                id="previewContainer"
-                class="preview-container desktop">
-
-                <iframe
-                    id="websitePreview"
-                    title="Generated Website"
-                    sandbox="allow-scripts allow-forms allow-modals allow-popups">
-                </iframe>
-
-            </div>
+            <iframe
+                id="websitePreview"
+                title="Generated Website"
+                sandbox="allow-scripts allow-forms allow-modals allow-popups">
+            </iframe>
 
         </div>
 
-    </main>
+    </div>
+
+</main>
 
 
-    <script>
+<script>
+
+/* =====================================
+   CONFIGURATION
+===================================== */
+
+const AI_URL =
+    "https://webcraft-ai-1.lutaayacyrus76.workers.dev/api/generate";
+
+
+/* =====================================
+   ELEMENTS
+===================================== */
+
+const preview =
+    document.getElementById("websitePreview");
+
+const editPrompt =
+    document.getElementById("editPrompt");
+
+const editBtn =
+    document.getElementById("editBtn");
+
+const status =
+    document.getElementById("status");
+
+const previewContainer =
+    document.getElementById("previewContainer");
+
+const previewStage =
+    document.getElementById("previewStage");
+
+const emptyState =
+    document.getElementById("emptyState");
+
+const deviceLabel =
+    document.getElementById("deviceLabel");
+
+
+/* =====================================
+   LOAD GENERATED WEBSITE
+===================================== */
+
+let website =
+    localStorage.getItem("generatedWebsite");
+
+
+if (!website) {
+
+    previewStage.style.display = "none";
+    emptyState.style.display = "flex";
+
+    showStatus(
+        "No generated website found.",
+        "error"
+    );
+
+} else {
+
+    previewStage.style.display = "flex";
+    emptyState.style.display = "none";
+
+    preview.srcdoc = website;
+
+}
+
+
+/* =====================================
+   STATUS
+===================================== */
+
+function showStatus(message, type) {
+
+    status.textContent = message;
+
+    status.className = "";
+
+    if (type === "success") {
+        status.classList.add("status-success");
+    }
+
+    if (type === "error") {
+        status.classList.add("status-error");
+    }
+
+    if (type === "loading") {
+        status.classList.add("status-loading");
+    }
+}
+
+
+/* =====================================
+   BACK
+===================================== */
+
+function goBack() {
+
+    window.location.href = "/";
+
+}
+
+
+/* =====================================
+   DEVICE PREVIEW
+===================================== */
+
+function setDevice(device) {
+
+    previewContainer.classList.remove(
+        "desktop",
+        "tablet",
+        "mobile"
+    );
+
+    previewContainer.classList.add(device);
+
+    document
+        .getElementById("desktopBtn")
+        .classList.remove("active");
+
+    document
+        .getElementById("tabletBtn")
+        .classList.remove("active");
+
+    document
+        .getElementById("mobileBtn")
+        .classList.remove("active");
+
+
+    if (device === "desktop") {
+
+        document
+            .getElementById("desktopBtn")
+            .classList.add("active");
+
+        deviceLabel.textContent =
+            "Desktop — 1400px";
+
+    }
+
+
+    if (device === "tablet") {
+
+        document
+            .getElementById("tabletBtn")
+            .classList.add("active");
+
+        deviceLabel.textContent =
+            "Tablet — 768px";
+
+    }
+
+
+    if (device === "mobile") {
+
+        document
+            .getElementById("mobileBtn")
+            .classList.add("active");
+
+        deviceLabel.textContent =
+            "Mobile — 390px";
+
+    }
+
+}
+
+
+/* =====================================
+   EDIT WEBSITE WITH AI
+===================================== */
+
+async function editWebsite() {
+
+    const instruction =
+        editPrompt.value.trim();
+
+
+    if (!instruction) {
+
+        showStatus(
+            "⚠️ Tell the AI what you want to change.",
+            "error"
+        );
+
+        editPrompt.focus();
+
+        return;
+
+    }
+
+
+    if (!website) {
+
+        showStatus(
+            "❌ No website is available to edit.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    editBtn.disabled = true;
+
+    editBtn.textContent =
+        "✨ Editing...";
+
+
+    showStatus(
+        "🧠 AI is updating your website...",
+        "loading"
+    );
+
+
+    try {
+
+        const response =
+            await fetch(
+                AI_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body: JSON.stringify({
+
+                        mode: "edit",
+
+                        prompt: instruction,
+
+                        website: website
+
+                    })
+                }
+            );
+
 
         /*
-         * =========================
-         * CONFIGURATION
-         * =========================
+         * Read the response as text first.
+         * This prevents the annoying:
+         *
+         * Unexpected end of JSON input
+         *
+         * error when the server sends an
+         * empty response.
          */
 
-        const AI_URL =
-            "https://webcraft-ai-1.lutaayacyrus76.workers.dev/api/generate";
+        const responseText =
+            await response.text();
 
 
-        /*
-         * =========================
-         * ELEMENTS
-         * =========================
-         */
+        console.log(
+            "WebCraft AI HTTP:",
+            response.status
+        );
 
-        const preview =
-            document.getElementById(
-                "websitePreview"
+        console.log(
+            "WebCraft AI response:",
+            responseText
+        );
+
+
+        if (!responseText.trim()) {
+
+            throw new Error(
+                "The AI server returned an empty response. HTTP " +
+                response.status
             );
-
-        const editPrompt =
-            document.getElementById(
-                "editPrompt"
-            );
-
-        const editBtn =
-            document.getElementById(
-                "editBtn"
-            );
-
-        const status =
-            document.getElementById(
-                "status"
-            );
-
-        const previewContainer =
-            document.getElementById(
-                "previewContainer"
-            );
-
-        const previewStage =
-            document.getElementById(
-                "previewStage"
-            );
-
-        const emptyState =
-            document.getElementById(
-                "emptyState"
-            );
-
-        const deviceLabel =
-            document.getElementById(
-                "deviceLabel"
-            );
-
-
-        /*
-         * =========================
-         * LOAD WEBSITE
-         * =========================
-         */
-
-        let website =
-            localStorage.getItem(
-                "generatedWebsite"
-            );
-
-
-        if (!website) {
-
-            previewStage.style.display =
-                "none";
-
-            emptyState.style.display =
-                "flex";
-
-            showStatus(
-                "No generated website found.",
-                ""
-            );
-
-        } else {
-
-            previewStage.style.display =
-                "flex";
-
-            emptyState.style.display =
-                "none";
-
-            preview.srcdoc =
-                website;
 
         }
 
 
-        /*
-         * =========================
-         * STATUS
-         * =========================
-         */
+        let data;
 
-        function showStatus(
-            message,
-            type = ""
+        try {
+
+            data =
+                JSON.parse(responseText);
+
+        } catch (jsonError) {
+
+            throw new Error(
+                "The AI server returned an invalid response. HTTP " +
+                response.status
+            );
+
+        }
+
+
+        if (
+            !response.ok ||
+            !data ||
+            data.success !== true
         ) {
 
-            status.textContent =
-                message;
+            throw new Error(
+                data && data.error
+                    ? data.error
+                    : "Website editing failed."
+            );
 
-            status.className =
-                type;
+        }
+
+
+        if (
+            typeof data.website !== "string" ||
+            data.website.trim().length < 50
+        ) {
+
+            throw new Error(
+                "AI returned an incomplete website."
+            );
 
         }
 
 
         /*
-         * =========================
-         * DEVICE PREVIEW
-         * =========================
+         * Get the new website.
          */
 
-        function setDevice(device) {
-
-            /*
-             * Remove current device
-             */
-
-            previewContainer.classList.remove(
-                "desktop",
-                "tablet",
-                "mobile"
-            );
-
-
-            /*
-             * Add selected device
-             */
-
-            previewContainer.classList.add(
-                device
-            );
-
-
-            /*
-             * Buttons
-             */
-
-            document
-                .getElementById("desktopBtn")
-                .classList.remove("active");
-
-            document
-                .getElementById("tabletBtn")
-                .classList.remove("active");
-
-            document
-                .getElementById("mobileBtn")
-                .classList.remove("active");
-
-
-            /*
-             * Device label
-             */
-
-            if (device === "desktop") {
-
-                document
-                    .getElementById("desktopBtn")
-                    .classList.add("active");
-
-                deviceLabel.textContent =
-                    "Desktop — 1400px";
-
-            }
-
-
-            if (device === "tablet") {
-
-                document
-                    .getElementById("tabletBtn")
-                    .classList.add("active");
-
-                deviceLabel.textContent =
-                    "Tablet — 768px";
-
-            }
-
-
-            if (device === "mobile") {
-
-                document
-                    .getElementById("mobileBtn")
-                    .classList.add("active");
-
-                deviceLabel.textContent =
-                    "Mobile — 390px";
-
-            }
-
-        }
+        website =
+            data.website.trim();
 
 
         /*
-         * =========================
-         * EDIT WEBSITE
-         * =========================
+         * Save it.
          */
 
-        async function editWebsite() {
+        localStorage.setItem(
+            "generatedWebsite",
+            website
+        );
 
-            const instruction =
-                editPrompt.value.trim();
+
+        /*
+         * Save the latest instruction.
+         */
+
+        localStorage.setItem(
+            "websitePrompt",
+            instruction
+        );
 
 
-            if (!instruction) {
+        /*
+         * Update the preview.
+         */
 
-                showStatus(
-                    "⚠️ Tell the AI what you want to change.",
-                    "error"
-                );
+        preview.srcdoc =
+            website;
 
-                editPrompt.focus();
 
-                return;
+        /*
+         * Clear the editing box.
+         */
 
+        editPrompt.value = "";
+
+
+        showStatus(
+            "✅ Website updated successfully!",
+            "success"
+        );
+
+
+    } catch (error) {
+
+        console.error(
+            "WebCraft AI EDIT ERROR:",
+            error
+        );
+
+
+        showStatus(
+            "❌ " +
+            (
+                error.message ||
+                "Something went wrong."
+            ),
+            "error"
+        );
+
+
+    } finally {
+
+        editBtn.disabled = false;
+
+        editBtn.textContent =
+            "✨ Edit Website";
+
+    }
+
+}
+
+
+/* =====================================
+   DOWNLOAD WEBSITE
+===================================== */
+
+function downloadWebsite() {
+
+    if (!website) {
+
+        showStatus(
+            "❌ There is no website to download.",
+            "error"
+        );
+
+        return;
+
+    }
+
+
+    const blob =
+        new Blob(
+            [website],
+            {
+                type: "text/html;charset=utf-8"
             }
+        );
 
 
-            if (!website) {
-
-                showStatus(
-                    "❌ No website is available to edit.",
-                    "error"
-                );
-
-                return;
-
-            }
+    const url =
+        URL.createObjectURL(blob);
 
 
-            editBtn.disabled =
-                true;
-
-            editBtn.textContent =
-                "✨ Editing...";
+    const link =
+        document.createElement("a");
 
 
-            showStatus(
-                "🧠 AI is updating your website...",
-                "loading"
-            );
+    link.href = url;
+
+    link.download =
+        "webcraft-ai-website.html";
 
 
-            try {
+    document.body.appendChild(link);
 
-                const response =
-                    await fetch(
-                        AI_URL,
-                        {
-                            method: "POST",
+    link.click();
 
-                            headers: {
-                                "Content-Type":
-                                    "application/json",
-
-                                "Accept":
-                                    "application/json"
-                            },
-
-                            body: JSON.stringify({
-
-                                mode: "edit",
-
-                                prompt:
-                                    instruction,
-
-                                website:
-                                    website
-
-                            })
-                        }
-                    );
+    link.remove();
 
 
-                /*
-                 * Read as text first.
-                 */
-
-                const responseText =
-                    await response.text();
-
-
-                console.log(
-                    "SERVER STATUS:",
-                    response.status
-                );
-
-                console.log(
-                    "SERVER RESPONSE:",
-                    responseText
-                );
+    setTimeout(
+        function () {
+            URL.revokeObjectURL(url);
+        },
+        1000
+    );
 
 
-                if (
-                    !responseText.trim()
-                ) {
+    showStatus(
+        "✅ Website downloaded successfully!",
+        "success"
+    );
 
-                    throw new Error(
-                        "The server returned an empty response. HTTP status: " +
-                        response.status
-                    );
-
-                }
+}
 
 
-                let data;
+/* =====================================
+   CTRL + ENTER
+===================================== */
 
+editPrompt.addEventListener(
+    "keydown",
+    function(event) {
 
-                try {
+        if (
+            event.ctrlKey &&
+            event.key === "Enter"
+        ) {
 
-                    data =
-                        JSON.parse(
-                            responseText
-                        );
+            editWebsite();
 
-                } catch (jsonError) {
+        }
 
-                    throw new Error(
-                        "Server returned an invalid response. HTTP status: " +
-                        response.status
-                    );
+    }
+);
 
-                }
+</script>
 
-
-                if (
-                    !response.ok ||
-                    !data ||
-                    data.success !== true
-                ) {
-
-                    throw new Error(
-                        data &&
-                        data.error
-                            ? data.error
-                            : "Website editing failed."
-                    );
-
-                }
-
-
-                if (
-                    !data.website ||
-                    typeof data.website !== "string"
-                ) {
-
-                    throw new Error(
-                        "AI did not return a valid website."
-                    );
-
-                }
-
-
-                if (
-                    data.website.length < 50
-                ) {
-
-                    throw new Error(
-                        "AI returned an incomplete website."
-                    );
-
-                }
-
-
-                /*
-                 * UPDATE WEBSITE
-                 */
-
-                website =
-                    data.website;
-
-
-                /*
-                 * SAVE WEBSITE
-                 */
-
-                localStorage.setItem(
-                    "generatedWebsite",
-                    website
-                );
-
-
-                localStorage.setItem(
-                    "websitePrompt",
-                    instruction
-                );
-
-
-                /*
-                 * UPDATE PREVIEW
-                 */
-
-                preview.srcdoc =
-                    website;
-
-
-                /*
-                 * Clear input
-        
+</body>
+    </html>
