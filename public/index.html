@@ -658,7 +658,10 @@ Create a professional cleaning company website for a business in Kampala, Uganda
             ></textarea>
 
 
-            <button id="generateBtn">
+            <button
+                type="button"
+                id="generateBtn"
+            >
 
                 ✨ Generate Website
 
@@ -688,6 +691,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
 
                 <button
+                    type="button"
                     class="example-btn"
                     onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')"
                 >
@@ -699,6 +703,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
 
                 <button
+                    type="button"
                     class="example-btn"
                     onclick="useExample('Create a professional portfolio website for a web developer. Include a hero section, about me, skills, projects, services, testimonials and contact section.')"
                 >
@@ -710,6 +715,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
 
                 <button
+                    type="button"
                     class="example-btn"
                     onclick="useExample('Create a modern school website with information about the school, courses, teachers, admissions, fees, gallery, testimonials, contact information and school opening hours.')"
                 >
@@ -721,6 +727,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
 
                 <button
+                    type="button"
                     class="example-btn"
                     onclick="useExample('Create a professional cleaning company website for a cleaning business in Kampala, Uganda. Include services, prices, about us, gallery, testimonials, contact information, WhatsApp button and opening hours.')"
                 >
@@ -810,9 +817,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
             <!-- SAVED WEBSITES LIST -->
 
-            <div id="savedWebsitesList">
-
-            </div>
+            <div id="savedWebsitesList"></div>
 
 
         </section>
@@ -964,9 +969,10 @@ Create a professional cleaning company website for a business in Kampala, Uganda
             document.getElementById("status");
 
 
-        /*
-         * PUTTING AN EXAMPLE INTO THE PROMPT
-         */
+
+        /* =====================================================
+           EXAMPLE BUTTONS
+        ===================================================== */
 
         function useExample(text) {
 
@@ -977,9 +983,10 @@ Create a professional cleaning company website for a business in Kampala, Uganda
         }
 
 
-        /*
-         * GENERATE WEBSITE
-         */
+
+        /* =====================================================
+           GENERATE WEBSITE
+        ===================================================== */
 
         generateBtn.addEventListener(
             "click",
@@ -1051,22 +1058,4 @@ Create a professional cleaning company website for a business in Kampala, Uganda
                     if (!responseText.trim()) {
 
                         throw new Error(
-                            "The server returned an empty response."
-                        );
-
-                    }
-
-
-                    let data;
-
-
-                    try {
-
-                        data =
-                            JSON.parse(
-                                responseText
-                            );
-
-                    } catch (jsonError) {
-
-                        throw new Error(
+                            "The  
