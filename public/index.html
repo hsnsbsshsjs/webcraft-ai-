@@ -181,6 +181,7 @@
             margin-top: 16px;
             color: #aaaab5;
             font-size: 14px;
+            line-height: 1.5;
         }
 
 
@@ -947,7 +948,7 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
 
         /* =====================================================
-           EXISTING WEBCRAFT AI CODE
+           WEBCRAFT AI GENERATOR
         ===================================================== */
 
 
@@ -963,7 +964,6 @@ Create a professional cleaning company website for a business in Kampala, Uganda
             document.getElementById("status");
 
 
-
         /*
          * PUTTING AN EXAMPLE INTO THE PROMPT
          */
@@ -975,7 +975,6 @@ Create a professional cleaning company website for a business in Kampala, Uganda
             promptBox.focus();
 
         }
-
 
 
         /*
@@ -991,7 +990,6 @@ Create a professional cleaning company website for a business in Kampala, Uganda
                     promptBox.value.trim();
 
 
-
                 if (!prompt) {
 
                     status.textContent =
@@ -1000,7 +998,6 @@ Create a professional cleaning company website for a business in Kampala, Uganda
                     return;
 
                 }
-
 
 
                 generateBtn.disabled =
@@ -1015,13 +1012,11 @@ Create a professional cleaning company website for a business in Kampala, Uganda
                     "🧠 AI is designing your website...";
 
 
-
                 try {
 
 
                     /*
-                     * Send the request to our
-                     * Cloudflare Worker.
+                     * Send request to Cloudflare Worker
                      */
 
                     const response =
@@ -1032,6 +1027,9 @@ Create a professional cleaning company website for a business in Kampala, Uganda
 
                                 headers: {
                                     "Content-Type":
+                                        "application/json",
+
+                                    "Accept":
                                         "application/json"
                                 },
 
@@ -1042,38 +1040,33 @@ Create a professional cleaning company website for a business in Kampala, Uganda
                         );
 
 
-
                     /*
-                     * Convert response to JSON
+                     * Read response safely
                      */
 
-                    const data =
-                        await response.json();
+                    const responseText =
+                        await response.text();
 
 
-
-                    /*
-                     * Check for errors
-                     */
-
-                    if (
-                        !response.ok ||
-                        !data.success
-                    ) {
+                    if (!responseText.trim()) {
 
                         throw new Error(
-                            data.error ||
-                            "Website generation failed."
+                            "The server returned an empty response."
                         );
 
                     }
 
 
+                    let data;
 
-                    /*
-                     * Save generated website
-                     */
 
-                    localStorage.setItem(
-                        "generatedWebsite",
-          
+                    try {
+
+                        data =
+                            JSON.parse(
+                                responseText
+                            );
+
+                    } catch (jsonError) {
+
+                        throw new Error(
