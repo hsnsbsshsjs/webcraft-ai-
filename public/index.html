@@ -1,652 +1,1079 @@
-<!DOCTYPE html>  <html lang="en">  
-<head>  
-    <meta charset="UTF-8">  
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">  <title>WebCraft AI - AI Website Builder</title>  
+<!DOCTYPE html>
+<html lang="en">
 
-<style>  
-    * {  
-        box-sizing: border-box;  
-    }  
+<head>
 
-    html {  
-        scroll-behavior: smooth;  
-    }  
+    <meta charset="UTF-8">
 
-    body {  
-        margin: 0;  
-        font-family: Arial, Helvetica, sans-serif;  
-        background: #0b0b10;  
-        color: #ffffff;  
-    }  
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
 
-    button,  
-    textarea {  
-        font-family: inherit;  
-    }  
-
-    /* HEADER */  
-
-    header {  
-        width: 100%;  
-        padding: 20px;  
-        display: flex;  
-        justify-content: center;  
-    }  
-
-    .logo {  
-        font-size: 24px;  
-        font-weight: 800;  
-    }  
-
-    .logo span {  
-        color: #9b5cff;  
-    }  
-
-    /* HERO */  
-
-    .hero {  
-        min-height: calc(100vh - 80px);  
-        display: flex;  
-        flex-direction: column;  
-        align-items: center;  
-        text-align: center;  
-        padding: 60px 20px 80px;  
-    }  
-
-    .badge {  
-        display: inline-block;  
-        padding: 9px 15px;  
-        border: 1px solid #30263f;  
-        background: #15121c;  
-        border-radius: 50px;  
-        color: #c7a9ff;  
-        font-size: 14px;  
-        margin-bottom: 25px;  
-    }  
-
-    h1 {  
-        max-width: 850px;  
-        font-size: clamp(42px, 8vw, 78px);  
-        line-height: 1.05;  
-        margin: 0;  
-        letter-spacing: -3px;  
-    }  
-
-    h1 span {  
-        color: #9b5cff;  
-    }  
-
-    .subtitle {  
-        max-width: 650px;  
-        color: #a9a9b5;  
-        font-size: 19px;  
-        line-height: 1.6;  
-        margin: 25px auto 35px;  
-    }  
-
-    /* BUILDER */  
-
-    .builder {  
-        width: 100%;  
-        max-width: 900px;  
-        background: #121219;  
-        border: 1px solid #292933;  
-        border-radius: 20px;  
-        padding: 20px;  
-        box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);  
-    }  
-
-    #prompt {  
-        width: 100%;  
-        min-height: 180px;  
-        resize: vertical;  
-        background: #191920;  
-        border: 1px solid #34343f;  
-        border-radius: 14px;  
-        color: white;  
-        padding: 18px;  
-        font-size: 16px;  
-        line-height: 1.5;  
-        outline: none;  
-    }  
-
-    #prompt:focus {  
-        border-color: #9b5cff;  
-    }  
-
-    #prompt::placeholder {  
-        color: #777783;  
-    }  
-
-    #generateBtn {  
-        width: 100%;  
-        margin-top: 14px;  
-        min-height: 55px;  
-        border: none;  
-        border-radius: 13px;  
-        background: #9b5cff;  
-        color: white;  
-        font-size: 16px;  
-        font-weight: 800;  
-        cursor: pointer;  
-        transition: 0.2s;  
-    }  
-
-    #generateBtn:hover {  
-        background: #8b4cf0;  
-        transform: translateY(-1px);  
-    }  
-
-    #generateBtn:disabled {  
-        opacity: 0.6;  
-        cursor: not-allowed;  
-        transform: none;  
-    }  
-
-    /* STATUS */  
-
-    #status {  
-        min-height: 25px;  
-        margin-top: 16px;  
-        color: #aaaab5;  
-        font-size: 14px;  
-    }  
-
-    /* EXAMPLES */  
-
-    .examples {  
-        width: 100%;  
-        max-width: 900px;  
-        margin-top: 35px;  
-    }  
-
-    .examples-title {  
-        color: #858592;  
-        margin-bottom: 15px;  
-        font-size: 14px;  
-    }  
-
-    .example-buttons {  
-        display: flex;  
-        justify-content: center;  
-        flex-wrap: wrap;  
-        gap: 10px;  
-    }  
-
-    .example-btn {  
-        background: #17171f;  
-        border: 1px solid #292933;  
-        color: #dddde5;  
-        padding: 11px 17px;  
-        border-radius: 50px;  
-        cursor: pointer;  
-        font-size: 14px;  
-        transition: 0.2s;  
-    }  
-
-    .example-btn:hover {  
-        border-color: #9b5cff;  
-        color: white;  
-    }  
-
-    /* FEATURES */  
-
-    .features {  
-        padding: 80px 20px;  
-        background: #101017;  
-        border-top: 1px solid #20202a;  
-    }  
-
-    .features h2 {  
-        text-align: center;  
-        font-size: 35px;  
-        margin: 0 0 40px;  
-    }  
-
-    .feature-grid {  
-        max-width: 1000px;  
-        margin: auto;  
-        display: grid;  
-        grid-template-columns: repeat(3, 1fr);  
-        gap: 18px;  
-    }  
-
-    .feature {  
-        background: #16161e;  
-        border: 1px solid #292933;  
-        border-radius: 16px;  
-        padding: 25px;  
-    }  
-
-    .feature-icon {  
-        font-size: 28px;  
-        margin-bottom: 15px;  
-    }  
-
-    .feature h3 {  
-        margin: 0 0 10px;  
-    }  
-
-    .feature p {  
-        color: #9999a5;  
-        line-height: 1.6;  
-        margin: 0;  
-    }  
-
-    /* FOOTER */  
-
-    footer {  
-        text-align: center;  
-        padding: 30px 20px;  
-        color: #777783;  
-        background: #0b0b10;  
-        border-top: 1px solid #20202a;  
-    }  
-
-    /* MOBILE */  
-
-    @media (max-width: 700px) {  
-
-        .hero {  
-            padding-top: 40px;  
-        }  
-
-        h1 {  
-            letter-spacing: -2px;  
-        }  
-
-        .subtitle {  
-            font-size: 16px;  
-        }  
-
-        .builder {  
-            padding: 14px;  
-        }  
-
-        #prompt {  
-            min-height: 160px;  
-        }  
-
-        .feature-grid {  
-            grid-template-columns: 1fr;  
-        }  
-
-        .features {  
-            padding: 60px 20px;  
-        }  
-    }  
-</style>
-
-</head>  <body>  <!-- HEADER -->  
-
-<header>  
-    <div class="logo">  
-        ✨ WebCraft <span>AI</span>  
-    </div>  
-</header>  
+    <title>WebCraft AI - AI Website Builder</title>
 
 
-<!-- HERO -->  
+    <style>
 
-<section class="hero">  
-
-    <div class="badge">  
-        ✨ AI-Powered Website Builder  
-    </div>  
-
-    <h1>  
-        Build a website  
-        <br>  
-        <span>with AI</span>  
-    </h1>  
-
-    <p class="subtitle">  
-        Describe the website you want and let WebCraft AI  
-        create a beautiful, professional and responsive website for you.  
-    </p>  
+        * {
+            box-sizing: border-box;
+        }
 
 
-    <!-- BUILDER -->  
+        html {
+            scroll-behavior: smooth;
+        }
 
-    <div class="builder">  
 
-        <textarea  
-            id="prompt"  
-            placeholder="Describe the website you want...
+        body {
+            margin: 0;
+            font-family: Arial, Helvetica, sans-serif;
+            background: #0b0b10;
+            color: #ffffff;
+        }
+
+
+        button,
+        textarea,
+        input {
+            font-family: inherit;
+        }
+
+
+        /* HEADER */
+
+        header {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+
+
+        .logo {
+            font-size: 24px;
+            font-weight: 800;
+        }
+
+
+        .logo span {
+            color: #9b5cff;
+        }
+
+
+        /* HERO */
+
+        .hero {
+            min-height: calc(100vh - 80px);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 60px 20px 80px;
+        }
+
+
+        .badge {
+            display: inline-block;
+            padding: 9px 15px;
+            border: 1px solid #30263f;
+            background: #15121c;
+            border-radius: 50px;
+            color: #c7a9ff;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+
+
+        h1 {
+            max-width: 850px;
+            font-size: clamp(42px, 8vw, 78px);
+            line-height: 1.05;
+            margin: 0;
+            letter-spacing: -3px;
+        }
+
+
+        h1 span {
+            color: #9b5cff;
+        }
+
+
+        .subtitle {
+            max-width: 650px;
+            color: #a9a9b5;
+            font-size: 19px;
+            line-height: 1.6;
+            margin: 25px auto 35px;
+        }
+
+
+        /* BUILDER */
+
+        .builder {
+            width: 100%;
+            max-width: 900px;
+            background: #121219;
+            border: 1px solid #292933;
+            border-radius: 20px;
+            padding: 20px;
+            box-shadow: 0 20px 70px rgba(0, 0, 0, 0.35);
+        }
+
+
+        #prompt {
+            width: 100%;
+            min-height: 180px;
+            resize: vertical;
+            background: #191920;
+            border: 1px solid #34343f;
+            border-radius: 14px;
+            color: white;
+            padding: 18px;
+            font-size: 16px;
+            line-height: 1.5;
+            outline: none;
+        }
+
+
+        #prompt:focus {
+            border-color: #9b5cff;
+        }
+
+
+        #prompt::placeholder {
+            color: #777783;
+        }
+
+
+        #generateBtn {
+            width: 100%;
+            margin-top: 14px;
+            min-height: 55px;
+            border: none;
+            border-radius: 13px;
+            background: #9b5cff;
+            color: white;
+            font-size: 16px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: 0.2s;
+        }
+
+
+        #generateBtn:hover {
+            background: #8b4cf0;
+            transform: translateY(-1px);
+        }
+
+
+        #generateBtn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+
+        /* STATUS */
+
+        #status {
+            min-height: 25px;
+            margin-top: 16px;
+            color: #aaaab5;
+            font-size: 14px;
+        }
+
+
+        /* EXAMPLES */
+
+        .examples {
+            width: 100%;
+            max-width: 900px;
+            margin-top: 35px;
+        }
+
+
+        .examples-title {
+            color: #858592;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+
+
+        .example-buttons {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+
+        .example-btn {
+            background: #17171f;
+            border: 1px solid #292933;
+            color: #dddde5;
+            padding: 11px 17px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: 0.2s;
+        }
+
+
+        .example-btn:hover {
+            border-color: #9b5cff;
+            color: white;
+        }
+
+
+        /* =====================================================
+           SAVED WEBSITES
+        ===================================================== */
+
+        .saved-websites {
+            width: 100%;
+            max-width: 1000px;
+            margin: 50px auto 0;
+            padding: 25px;
+            background: #121219;
+            border: 1px solid #292933;
+            border-radius: 20px;
+            text-align: left;
+        }
+
+
+        .saved-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+
+        .saved-title {
+            margin: 0;
+            font-size: 24px;
+        }
+
+
+        .saved-subtitle {
+            color: #888894;
+            font-size: 14px;
+            margin: 6px 0 0;
+        }
+
+
+        .saved-count {
+            background: #9b5cff;
+            color: white;
+            min-width: 35px;
+            height: 35px;
+            padding: 0 10px;
+            border-radius: 50px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            font-size: 14px;
+        }
+
+
+        .save-current-box {
+            background: #191920;
+            border: 1px solid #292933;
+            border-radius: 14px;
+            padding: 15px;
+            margin-bottom: 20px;
+        }
+
+
+        .save-current-title {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+
+        .save-row {
+            display: flex;
+            gap: 10px;
+        }
+
+
+        #websiteName {
+            flex: 1;
+            min-height: 48px;
+            background: #101017;
+            border: 1px solid #34343f;
+            border-radius: 10px;
+            padding: 12px 14px;
+            color: white;
+            outline: none;
+            font-size: 15px;
+        }
+
+
+        #websiteName:focus {
+            border-color: #9b5cff;
+        }
+
+
+        #websiteName::placeholder {
+            color: #777783;
+        }
+
+
+        #saveWebsiteBtn {
+            min-width: 150px;
+            border: none;
+            border-radius: 10px;
+            background: #9b5cff;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            padding: 0 18px;
+        }
+
+
+        #saveWebsiteBtn:hover {
+            background: #8b4cf0;
+        }
+
+
+        #saveWebsiteBtn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+
+        /* SAVED LIST */
+
+        #savedWebsitesList {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+
+        .saved-website {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 15px;
+            background: #17171f;
+            border: 1px solid #292933;
+            border-radius: 12px;
+            padding: 15px;
+        }
+
+
+        .saved-website:hover {
+            border-color: #494958;
+        }
+
+
+        .saved-info {
+            min-width: 0;
+            flex: 1;
+        }
+
+
+        .saved-name {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+            word-break: break-word;
+        }
+
+
+        .saved-date {
+            color: #777783;
+            font-size: 12px;
+        }
+
+
+        .saved-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 7px;
+            justify-content: flex-end;
+        }
+
+
+        .saved-action {
+            border: 1px solid #34343f;
+            background: #22222b;
+            color: white;
+            border-radius: 8px;
+            padding: 8px 11px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+
+        .saved-action:hover {
+            border-color: #9b5cff;
+        }
+
+
+        .saved-action.open {
+            background: #9b5cff;
+            border-color: #9b5cff;
+        }
+
+
+        .saved-action.delete {
+            color: #ff7777;
+        }
+
+
+        .saved-action.delete:hover {
+            border-color: #ff7777;
+        }
+
+
+        .no-saved {
+            text-align: center;
+            padding: 30px 15px;
+            color: #777783;
+            border: 1px dashed #292933;
+            border-radius: 12px;
+        }
+
+
+        /* FEATURES */
+
+        .features {
+            padding: 80px 20px;
+            background: #101017;
+            border-top: 1px solid #20202a;
+        }
+
+
+        .features h2 {
+            text-align: center;
+            font-size: 35px;
+            margin: 0 0 40px;
+        }
+
+
+        .feature-grid {
+            max-width: 1000px;
+            margin: auto;
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 18px;
+        }
+
+
+        .feature {
+            background: #16161e;
+            border: 1px solid #292933;
+            border-radius: 16px;
+            padding: 25px;
+        }
+
+
+        .feature-icon {
+            font-size: 28px;
+            margin-bottom: 15px;
+        }
+
+
+        .feature h3 {
+            margin: 0 0 10px;
+        }
+
+
+        .feature p {
+            color: #9999a5;
+            line-height: 1.6;
+            margin: 0;
+        }
+
+
+        /* FOOTER */
+
+        footer {
+            text-align: center;
+            padding: 30px 20px;
+            color: #777783;
+            background: #0b0b10;
+            border-top: 1px solid #20202a;
+        }
+
+
+        /* MOBILE */
+
+        @media (max-width: 700px) {
+
+            .hero {
+                padding-top: 40px;
+            }
+
+
+            h1 {
+                letter-spacing: -2px;
+            }
+
+
+            .subtitle {
+                font-size: 16px;
+            }
+
+
+            .builder {
+                padding: 14px;
+            }
+
+
+            #prompt {
+                min-height: 160px;
+            }
+
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+            }
+
+
+            .features {
+                padding: 60px 20px;
+            }
+
+
+            /* SAVED WEBSITES MOBILE */
+
+            .saved-websites {
+                padding: 15px;
+                margin-top: 35px;
+            }
+
+
+            .saved-header {
+                align-items: flex-start;
+            }
+
+
+            .saved-title {
+                font-size: 21px;
+            }
+
+
+            .save-row {
+                flex-direction: column;
+            }
+
+
+            #websiteName {
+                min-height: 50px;
+            }
+
+
+            #saveWebsiteBtn {
+                min-height: 50px;
+            }
+
+
+            .saved-website {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+
+            .saved-actions {
+                justify-content: stretch;
+            }
+
+
+            .saved-action {
+                flex: 1;
+            }
+
+        }
+
+    </style>
+
+</head>
+
+
+<body>
+
+
+    <!-- HEADER -->
+
+    <header>
+
+        <div class="logo">
+            ✨ WebCraft <span>AI</span>
+        </div>
+
+    </header>
+
+
+
+    <!-- HERO -->
+
+    <section class="hero">
+
+
+        <div class="badge">
+            ✨ AI-Powered Website Builder
+        </div>
+
+
+        <h1>
+
+            Build a website
+
+            <br>
+
+            <span>with AI</span>
+
+        </h1>
+
+
+        <p class="subtitle">
+
+            Describe the website you want and let WebCraft AI
+            create a beautiful, professional and responsive website for you.
+
+        </p>
+
+
+
+        <!-- BUILDER -->
+
+        <div class="builder">
+
+
+            <textarea
+                id="prompt"
+                placeholder="Describe the website you want...
 
 Example:
 Create a professional cleaning company website for a business in Kampala, Uganda. Include a hero section, services, prices, about us, gallery, testimonials, contact information, WhatsApp button, opening hours and footer."
-></textarea>
+            ></textarea>
 
-<button id="generateBtn">  
-            ✨ Generate Website  
-        </button>  
 
+            <button id="generateBtn">
 
-        <div id="status"></div>  
+                ✨ Generate Website
 
-    </div>  
+            </button>
 
 
-    <!-- EXAMPLES -->  
+            <div id="status"></div>
 
-    <div class="examples">  
 
-        <div class="examples-title">  
-            Try an example:  
-        </div>  
+        </div>
 
-        <div class="example-buttons">  
 
-            <button  
-                class="example-btn"  
-                onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')">  
-                🍔 Restaurant  
-            </button>  
 
+        <!-- EXAMPLES -->
 
-            <button  
-                class="example-btn"  
-                onclick="useExample('Create a professional portfolio website for a web developer. Include a hero section, about me, skills, projects, services, testimonials and contact section.')">  
-                💻 Portfolio  
-            </button>  
+        <div class="examples">
 
 
-            <button  
-                class="example-btn"  
-                onclick="useExample('Create a modern school website with information about the school, courses, teachers, admissions, fees, gallery, testimonials, contact information and school opening hours.')">  
-                🎓 School  
-            </button>  
+            <div class="examples-title">
 
+                Try an example:
 
-            <button  
-                class="example-btn"  
-                onclick="useExample('Create a professional cleaning company website for a cleaning business in Kampala, Uganda. Include services, prices, about us, gallery, testimonials, contact information, WhatsApp button and opening hours.')">  
-                🧹 Cleaning  
-            </button>  
+            </div>
 
-        </div>  
 
-    </div>  
+            <div class="example-buttons">
 
-</section>  
 
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a modern restaurant website with a hero section, menu, prices, about section, gallery, customer reviews, location, opening hours and contact information.')"
+                >
 
-<!-- FEATURES -->  
+                    🍔 Restaurant
 
-<section class="features">  
+                </button>
 
-    <h2>  
-        Build websites faster  
-    </h2>  
 
 
-    <div class="feature-grid">  
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a professional portfolio website for a web developer. Include a hero section, about me, skills, projects, services, testimonials and contact section.')"
+                >
 
-        <div class="feature">  
+                    💻 Portfolio
 
-            <div class="feature-icon">  
-                🤖  
-            </div>  
+                </button>
 
-            <h3>  
-                AI Generation  
-            </h3>  
 
-            <p>  
-                Describe your business and WebCraft AI  
-                creates the website for you.  
-            </p>  
 
-        </div>  
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a modern school website with information about the school, courses, teachers, admissions, fees, gallery, testimonials, contact information and school opening hours.')"
+                >
 
+                    🎓 School
 
-        <div class="feature">  
+                </button>
 
-            <div class="feature-icon">  
-                📱  
-            </div>  
 
-            <h3>  
-                Responsive Design  
-            </h3>  
 
-            <p>  
-                Generated websites are designed to work  
-                on phones, tablets and computers.  
-            </p>  
+                <button
+                    class="example-btn"
+                    onclick="useExample('Create a professional cleaning company website for a cleaning business in Kampala, Uganda. Include services, prices, about us, gallery, testimonials, contact information, WhatsApp button and opening hours.')"
+                >
 
-        </div>  
+                    🧹 Cleaning
 
+                </button>
 
-        <div class="feature">  
 
-            <div class="feature-icon">  
-                ⚡  
-            </div>  
+            </div>
 
-            <h3>  
-                Fast Creation  
-            </h3>  
 
-            <p>  
-                Turn a simple idea into a complete website  
-                in seconds.  
-            </p>  
+        </div>
 
-        </div>  
 
-    </div>  
 
-</section>  
+        <!-- =================================================
+             SAVED WEBSITES
+        ================================================== -->
 
+        <section class="saved-websites">
 
-<!-- FOOTER -->  
 
-<footer>  
+            <div class="saved-header">
 
-    © 2026 WebCraft AI.  
-    Built with AI.  
+                <div>
 
-</footer>  
+                    <h2 class="saved-title">
+                        💾 My Websites
+                    </h2>
 
+                    <p class="saved-subtitle">
+                        Save and manage your websites on this device.
+                    </p>
 
-<!-- JAVASCRIPT -->  
+                </div>
 
-<script>  
 
-    const generateBtn =  
-        document.getElementById("generateBtn");  
+                <div
+                    id="savedCount"
+                    class="saved-count"
+                >
+                    0
+                </div>
 
-    const promptBox =  
-        document.getElementById("prompt");  
+            </div>
 
-    const status =  
-        document.getElementById("status");  
 
 
-    /*  
-     * PUTTING AN EXAMPLE INTO THE PROMPT  
-     */  
+            <!-- SAVE CURRENT WEBSITE -->
 
-    function useExample(text) {  
+            <div class="save-current-box">
 
-        promptBox.value = text;  
+                <div class="save-current-title">
 
-        promptBox.focus();  
+                    💾 Save Current Website
 
-    }  
+                </div>
 
 
-    /*  
-     * GENERATE WEBSITE  
-     */  
+                <div class="save-row">
 
-    generateBtn.addEventListener(  
-        "click",  
-        async function () {  
 
-            const prompt =  
-                promptBox.value.trim();  
+                    <input
+                        type="text"
+                        id="websiteName"
+                        placeholder="Enter a name e.g. A-Class Cleaning Website"
+                    >
 
 
-            if (!prompt) {  
+                    <button
+                        type="button"
+                        id="saveWebsiteBtn"
+                        onclick="saveCurrentWebsite()"
+                    >
 
-                status.textContent =  
-                    "⚠️ Please describe the website you want.";  
+                        💾 Save Website
 
-                return;  
+                    </button>
 
-            }  
 
+                </div>
 
-            generateBtn.disabled = true;  
+            </div>
 
-            generateBtn.textContent =  
-                "✨ Creating...";  
 
-            status.textContent =  
-                "🧠 AI is designing your website...";  
 
+            <!-- SAVED WEBSITES LIST -->
 
-            try {  
+            <div id="savedWebsitesList">
 
-                /*  
-                 * Send the request to our  
-                 * Cloudflare Worker.  
-                 */  
+            </div>
 
-                const response =  
-                    await fetch(  
-                        "/api/generate",  
-                        {  
-                            method: "POST",  
 
-                            headers: {  
-                                "Content-Type":  
-                                    "application/json"  
-                            },  
+        </section>
 
-                            body: JSON.stringify({  
-                                prompt: prompt  
-                            })  
-                        }  
-                    );  
 
+    </section>
 
-                /*  
-                 * Convert response to JSON  
-                 */  
 
-                const data =  
-                    await response.json();  
 
+    <!-- FEATURES -->
 
-                /*  
-                 * Check for errors  
-                 */  
+    <section class="features">
 
-                if (  
-                    !response.ok ||  
-                    !data.success  
-                ) {  
 
-                    throw new Error(  
-                        data.error ||  
-                        "Website generation failed."  
-                    );  
+        <h2>
 
-                }  
+            Build websites faster
 
+        </h2>
 
-                /*  
-                 * Save generated website  
-                 */  
 
-                localStorage.setItem(  
-                    "generatedWebsite",  
-                    data.website  
-                );  
 
+        <div class="feature-grid">
 
-                localStorage.setItem(  
-                    "websitePrompt",  
-                    prompt  
-                );  
 
+            <div class="feature">
 
-                /*  
-                 * Show success  
-                 */  
 
-                status.textContent =  
-                    "✅ Website created successfully!";  
+                <div class="feature-icon">
 
+                    🤖
 
-                /*  
-                 * Open preview  
-                 */  
+                </div>
 
-                window.location.href =  
-                    "/preview.html";  
 
-            }  
+                <h3>
 
+                    AI Generation
 
-            catch (error) {  
+                </h3>
 
-                console.error(  
-                    "WebCraft AI Error:",  
-                    error  
-                );  
 
+                <p>
 
-                status.textContent =  
-                    "❌ " +  
-                    (  
-                        error.message ||  
-                        "Something went wrong."  
-                    );  
+                    Describe your business and WebCraft AI
+                    creates the website for you.
 
-            }  
+                </p>
 
 
-            finally {  
+            </div>
 
-                generateBtn.disabled =  
-                    false;  
 
-                generateBtn.textContent =  
-                    "✨ Generate Website";  
 
-            }  
+            <div class="feature">
 
-        }  
-    );  
 
+                <div class="feature-icon">
 
-    /*  
-     * CTRL + ENTER  
-     * ALSO GENERATES THE WEBSITE  
-     */  
+                    📱
 
-    promptBox.addEventListener(  
-        "keydown",  
-        function (event) {  
+                </div>
 
-            if (  
-                event.ctrlKey &&  
-                event.key === "Enter"  
-            ) {  
 
-                generateBtn.click();  
+                <h3>
 
-            }  
+                    Responsive Design
 
-        }  
-    );  
+                </h3>
 
-</script>
 
-</body>  
-    </html>
+                <p>
+
+                    Generated websites are designed to work
+                    on phones, tablets and computers.
+
+                </p>
+
+
+            </div>
+
+
+
+            <div class="feature">
+
+
+                <div class="feature-icon">
+
+                    ⚡
+
+                </div>
+
+
+                <h3>
+
+                    Fast Creation
+
+                </h3>
+
+
+                <p>
+
+                    Turn a simple idea into a complete website
+                    in seconds.
+
+                </p>
+
+
+            </div>
+
+
+        </div>
+
+
+    </section>
+
+
+
+    <!-- FOOTER -->
+
+    <footer>
+
+        © 2026 WebCraft AI.
+        Built with AI.
+
+    </footer>
+
+
+
+    <!-- JAVASCRIPT -->
+
+    <script>
+
+
+        /* =====================================================
+           EXISTING WEBCRAFT AI CODE
+        ===================================================== */
+
+
+        const generateBtn =
+            document.getElementById("generateBtn");
+
+
+        const promptBox =
+            document.getElementById("prompt");
+
+
+        const status =
+            document.getElementById("status");
+
+
+
+        /*
+         * PUTTING AN EXAMPLE INTO THE PROMPT
+         */
+
+        function useExample(text) {
+
+            promptBox.value = text;
+
+            promptBox.focus();
+
+        }
+
+
+
+        /*
+         * GENERATE WEBSITE
+         */
+
+        generateBtn.addEventListener(
+            "click",
+            async function () {
+
+
+                const prompt =
+                    promptBox.value.trim();
+
+
+
+                if (!prompt) {
+
+                    status.textContent =
+                        "⚠️ Please describe the website you want.";
+
+                    return;
+
+                }
+
+
+
+                generateBtn.disabled =
+                    true;
+
+
+                generateBtn.textContent =
+                    "✨ Creating...";
+
+
+                status.textContent =
+                    "🧠 AI is designing your website...";
+
+
+
+                try {
+
+
+                    /*
+                     * Send the request to our
+                     * Cloudflare Worker.
+                     */
+
+                    const response =
+                        await fetch(
+                            "/api/generate",
+                            {
+                                method: "POST",
+
+                                headers: {
+                                    "Content-Type":
+                                        "application/json"
+                                },
+
+                                body: JSON.stringify({
+                                    prompt: prompt
+                                })
+                            }
+                        );
+
+
+
+                    /*
+                     * Convert response to JSON
+                     */
+
+                    const data =
+                        await response.json();
+
+
+
+                    /*
+                     * Check for errors
+                     */
+
+                    if (
+                        !response.ok ||
+                        !data.success
+                    ) {
+
+                        throw new Error(
+                            data.error ||
+                            "Website generation failed."
+                        );
+
+                    }
+
+
+
+                    /*
+                     * Save generated website
+                     */
+
+                    localStorage.setItem(
+                        "generatedWebsite",
+          
