@@ -1157,7 +1157,7 @@ async function handleAPI(
         if (
             mode ===
             "edit"
-         
+            "edit"
   ) {
     const instruction = String(body.prompt || "").trim();
     const originalWebsite = String(body.website || "").trim();
