@@ -1,45 +1,29 @@
 /*
 ========================================================
- WEBCRAFT AI - CLOUDFLARE WORKER
-========================================================
-
- FEATURES:
- - Serves index.html and other static files
- - /api/generate
- - AI website generation
- - Automatic AI image generation
- - /api/image/:id
- - CORS
- - Safe error handling
- - Works with AI binding named "AI"
- - Works with KV binding named "WEBCRAFT_SITES" OR "SITES"
-
+ WEBCRAFT AI WORKER
 ========================================================
 */
 
-const TEXT_MODEL = "@cf/meta/llama-3.1-8b-instruct";
-const IMAGE_MODEL = "@cf/black-forest-labs/flux-1-schnell";
+const TEXT_MODEL = "@cf/meta/llama-3.1-8b-instruct-fp8";
 
+const IMAGE_MODEL =
+    "@cf/black-forest-labs/flux-1-schnell";
 
-/*
-========================================================
- MAIN WORKER
-========================================================
-*/
 
 export default {
 
-    async fetch(request, env, ctx) {
+    async fetch(request, env) {
 
         try {
 
-            const url = new URL(request.url);
+            const url =
+                new URL(request.url);
 
 
             /*
-            --------------------------------------------
+            ====================================================
             CORS
-            --------------------------------------------
+            ====================================================
             */
 
             if (request.method === "OPTIONS") {
@@ -53,9 +37,9 @@ export default {
 
 
             /*
-            --------------------------------------------
-            API: GENERATE WEBSITE
-            --------------------------------------------
+            ====================================================
+            GENERATE WEBSITE
+            ====================================================
             */
 
             if (
@@ -63,30 +47,37 @@ export default {
                 request.method === "POST"
             ) {
 
-                return await generateWebsite(request, env);
+                return await generateWebsite(
+                    request,
+                    env
+                );
 
             }
 
 
             /*
-            --------------------------------------------
-            API: GET GENERATED IMAGE
-            --------------------------------------------
+            ====================================================
+            GENERATE IMAGE
+            ====================================================
             */
 
             if (
-                url.pathname.startsWith("/api/image/")
+                url.pathname === "/api/image" &&
+                request.method === "POST"
             ) {
 
-                return await getImage(request, env);
+                return await generateImage(
+                    request,
+                    env
+                );
 
             }
 
 
             /*
-            --------------------------------------------
-            API STATUS
-            --------------------------------------------
+            ====================================================
+            WORKER STATUS
+            ====================================================
             */
 
             if (
@@ -97,11 +88,11 @@ export default {
 
                     success: true,
 
-                    message: "WebCraft AI Worker is running.",
+                    message:
+                        "WebCraft AI Worker is running.",
 
-                    ai: !!env.AI,
-
-                    storage: !!getKV(env)
+                    ai:
+                        !!env.AI
 
                 });
 
@@ -109,13 +100,9 @@ export default {
 
 
             /*
-            --------------------------------------------
-            SERVE WEBSITE FILES
-            --------------------------------------------
-
-            VERY IMPORTANT:
-            Everything that is not an API request is
-            passed to Cloudflare Static Assets.
+            ====================================================
+            SERVE WEBSITE
+            ====================================================
             */
 
             if (env.ASSETS) {
@@ -125,18 +112,13 @@ export default {
             }
 
 
-            /*
-            --------------------------------------------
-            FALLBACK
-            --------------------------------------------
-            */
-
             return new Response(
-                "WebCraft AI is running, but the ASSETS binding is missing.",
+                "WebCraft AI is running, but ASSETS is not configured.",
                 {
                     status: 500,
                     headers: {
-                        "Content-Type": "text/plain"
+                        "Content-Type":
+                            "text/plain"
                     }
                 }
             );
@@ -146,7 +128,7 @@ export default {
         catch (error) {
 
             console.error(
-                "WEBCRAFT WORKER ERROR:",
+                "WEBCRAFT ERROR:",
                 error
             );
 
@@ -169,7 +151,7 @@ export default {
 
 /*
 ========================================================
- CORS HEADERS
+ CORS
 ========================================================
 */
 
@@ -177,7 +159,8 @@ function corsHeaders() {
 
     return {
 
-        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Origin":
+            "*",
 
         "Access-Control-Allow-Methods":
             "GET, POST, OPTIONS",
@@ -196,7 +179,10 @@ function corsHeaders() {
 ========================================================
 */
 
-function jsonResponse(data, status = 200) {
+function jsonResponse(
+    data,
+    status = 200
+) {
 
     return new Response(
 
@@ -204,12 +190,12 @@ function jsonResponse(data, status = 200) {
 
         {
 
-            status,
+            status: status,
 
             headers: {
 
                 "Content-Type":
-                    "application/json; charset=UTF-8",
+                    "application/json",
 
                 ...corsHeaders()
 
@@ -224,49 +210,47 @@ function jsonResponse(data, status = 200) {
 
 /*
 ========================================================
- GET KV STORAGE
-========================================================
-
- Supports either:
-
- WEBCRAFT_SITES
-
- OR
-
- SITES
-========================================================
-*/
-
-function getKV(env) {
-
-    return (
-        env.WEBCRAFT_SITES ||
-        env.SITES ||
-        null
-    );
-
-}
-
-
-/*
-========================================================
  GENERATE WEBSITE
 ========================================================
 */
 
-async function generateWebsite(request, env) {
+async function generateWebsite(
+    request,
+    env
+) {
 
     /*
-    --------------------------------------------
-    Read request
-    --------------------------------------------
+    ----------------------------------------------------
+    CHECK AI
+    ----------------------------------------------------
+    */
+
+    if (!env.AI) {
+
+        return jsonResponse({
+
+            success: false,
+
+            error:
+                "AI binding is missing. Make sure your Wrangler AI binding is named AI."
+
+        }, 500);
+
+    }
+
+
+    /*
+    ----------------------------------------------------
+    READ REQUEST
+    ----------------------------------------------------
     */
 
     let body;
 
     try {
 
-        body = await request.json();
+        body =
+            await request.json();
 
     }
 
@@ -276,7 +260,8 @@ async function generateWebsite(request, env) {
 
             success: false,
 
-            error: "Invalid JSON request."
+            error:
+                "Invalid JSON request."
 
         }, 400);
 
@@ -295,133 +280,110 @@ async function generateWebsite(request, env) {
 
             success: false,
 
-            error: "Please provide a website prompt."
-
-        }, 400);
-
-    }
-
-
-    if (prompt.length > 10000) {
-
-        return jsonResponse({
-
-            success: false,
-
-            error: "Your prompt is too long."
-
-        }, 400);
-
-    }
-
-
-    /*
-    --------------------------------------------
-    Make sure AI binding exists
-    --------------------------------------------
-    */
-
-    if (!env.AI) {
-
-        return jsonResponse({
-
-            success: false,
-
             error:
-                "Cloudflare Workers AI binding 'AI' is missing."
+                "Please describe the website you want."
 
-        }, 500);
+        }, 400);
 
     }
 
 
     /*
-    --------------------------------------------
-    Website generation instructions
-    --------------------------------------------
+    ----------------------------------------------------
+    AI INSTRUCTIONS
+    ----------------------------------------------------
     */
 
     const systemPrompt = `
 
-You are WebCraft AI, a professional website designer
-and developer.
+You are WebCraft AI.
 
-Create a COMPLETE modern responsive website based on
-the user's request.
+You are an expert professional website designer
+and frontend developer.
 
-IMPORTANT RULES:
+Create a complete beautiful responsive website
+from the user's request.
 
-1. Return ONLY the complete HTML document.
+IMPORTANT:
 
-2. Start with:
+Return ONLY HTML.
+
+Start with:
+
 <!DOCTYPE html>
 
-3. End with:
+End with:
+
 </html>
 
-4. Include all CSS inside <style>.
+Do not use Markdown.
 
-5. Include JavaScript inside <script> when useful.
+Do not use code fences.
 
-6. Do not use Markdown.
+Put all CSS inside <style>.
 
-7. Do not use code fences.
+Put JavaScript inside <script>.
 
-8. Do not explain anything outside the HTML.
+Make the website responsive on phones,
+tablets and computers.
 
-9. Make the website beautiful and professional.
+Create professional layouts.
 
-10. Make it mobile responsive.
+Use attractive typography.
 
-11. Use semantic HTML.
+Use good spacing.
 
-12. Include realistic content based on the user's request.
+Use modern buttons.
 
-13. Use attractive sections such as:
-    - Hero
-    - About
-    - Services
-    - Products/menu when appropriate
-    - Gallery
-    - Testimonials
-    - Contact
-    - Location
-    - Opening hours
-    - Footer
+Use professional sections.
 
-14. IMPORTANT IMAGE SYSTEM:
+Depending on the business, include appropriate
+sections such as:
 
-For important visual sections, create image placeholders
-using this exact format:
+- Navigation
+- Hero
+- About
+- Services
+- Products
+- Menu
+- Pricing
+- Gallery
+- Testimonials
+- Team
+- Contact
+- Location
+- Opening hours
+- Footer
+
+IMAGE RULE:
+
+When the website needs an image, DO NOT use
+external image websites.
+
+Instead create an image placeholder like this:
 
 <img
-data-ai-image="DESCRIPTION OF THE IMAGE"
-alt="DESCRIPTION"
-class="ai-generated-image"
+    data-ai-image="Professional modern coffee shop interior with warm lighting and wooden furniture"
+    alt="Coffee shop interior"
+    class="ai-generated-image"
 >
 
-For example:
+You can create up to 3 image placeholders.
+
+Make every image description detailed.
+
+Example:
 
 <img
-data-ai-image="Professional modern Kampala cleaning team cleaning a luxury office"
-alt="Professional cleaning team"
-class="ai-generated-image"
+    data-ai-image="Professional Kampala cleaning team wearing modern uniforms cleaning a luxury office interior"
+    alt="Professional cleaning team"
+    class="ai-generated-image"
 >
 
-Do NOT use external image URLs.
+IMPORTANT:
 
-Do NOT use Unsplash.
-
-Do NOT use placeholder.com.
-
-Use between 1 and 4 AI image placeholders where
-appropriate.
-
-The data-ai-image description must be detailed enough
-for an AI image generator to understand what to create.
-
-15. Do not put sensitive personal information into
-the website.
+The generated website must still work if images
+are unavailable.
 
 USER REQUEST:
 
@@ -431,38 +393,42 @@ ${prompt}
 
 
     /*
-    --------------------------------------------
-    Ask Workers AI for website
-    --------------------------------------------
+    ----------------------------------------------------
+    CALL CLOUDFLARE AI
+    ----------------------------------------------------
     */
 
-    let aiResult;
+    let result;
 
     try {
 
-        aiResult = await env.AI.run(
-            TEXT_MODEL,
-            {
-                messages: [
+        result =
+            await env.AI.run(
+                TEXT_MODEL,
+                {
 
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
+                    messages: [
 
-                    {
-                        role: "user",
-                        content: prompt
-                    }
+                        {
+                            role: "system",
+                            content:
+                                systemPrompt
+                        },
 
-                ],
+                        {
+                            role: "user",
+                            content:
+                                prompt
+                        }
 
-                max_tokens: 12000,
+                    ],
 
-                temperature: 0.7
+                    max_tokens: 12000,
 
-            }
-        );
+                    temperature: 0.7
+
+                }
+            );
 
     }
 
@@ -479,7 +445,10 @@ ${prompt}
 
             error:
                 "AI website generation failed: " +
-                (error?.message || "Unknown AI error.")
+                (
+                    error?.message ||
+                    "Unknown AI error."
+                )
 
         }, 500);
 
@@ -487,14 +456,14 @@ ${prompt}
 
 
     /*
-    --------------------------------------------
-    Extract generated HTML
-    --------------------------------------------
+    ----------------------------------------------------
+    GET HTML
+    ----------------------------------------------------
     */
 
     let website =
-        aiResult?.response ||
-        aiResult?.result?.response ||
+        result?.response ||
+        result?.result?.response ||
         "";
 
 
@@ -516,51 +485,19 @@ ${prompt}
 
 
     /*
-    --------------------------------------------
-    Clean Markdown code fences if AI added them
-    --------------------------------------------
+    ----------------------------------------------------
+    CLEAN HTML
+    ----------------------------------------------------
     */
 
-    website = cleanHTML(website);
+    website =
+        cleanHTML(website);
 
 
     /*
-    --------------------------------------------
-    Generate automatic AI images
-    --------------------------------------------
-    */
-
-    try {
-
-        website =
-            await processAIImages(
-                website,
-                env
-            );
-
-    }
-
-    catch (error) {
-
-        /*
-        Do NOT destroy the whole website if image
-        generation fails.
-
-        The website can still be returned.
-        */
-
-        console.error(
-            "IMAGE GENERATION ERROR:",
-            error
-        );
-
-    }
-
-
-    /*
-    --------------------------------------------
-    Return generated website
-    --------------------------------------------
+    ----------------------------------------------------
+    RETURN WEBSITE
+    ----------------------------------------------------
     */
 
     return jsonResponse({
@@ -578,51 +515,43 @@ ${prompt}
 
 /*
 ========================================================
- CLEAN GENERATED HTML
+ CLEAN HTML
 ========================================================
 */
 
 function cleanHTML(html) {
 
-    let result = html.trim();
+    let result =
+        html.trim();
 
 
-    /*
-    Remove ```html
-    */
-
-    result = result.replace(
-        /^```html\s*/i,
-        ""
-    );
-
-
-    /*
-    Remove ```
-    */
-
-    result = result.replace(
-        /\s*```$/i,
-        ""
-    );
-
-
-    /*
-    If AI put text before <!DOCTYPE html>,
-    remove it.
-    */
-
-    const doctypeIndex =
-        result.toLowerCase().indexOf(
-            "<!doctype html>"
+    result =
+        result.replace(
+            /^```html\s*/i,
+            ""
         );
 
 
-    if (doctypeIndex > 0) {
+    result =
+        result.replace(
+            /\s*```$/i,
+            ""
+        );
+
+
+    const doctype =
+        result
+            .toLowerCase()
+            .indexOf(
+                "<!doctype html>"
+            );
+
+
+    if (doctype > 0) {
 
         result =
             result.substring(
-                doctypeIndex
+                doctype
             );
 
     }
@@ -635,480 +564,194 @@ function cleanHTML(html) {
 
 /*
 ========================================================
- PROCESS AI IMAGES
+ GENERATE IMAGE
+========================================================
+
+This endpoint can be called by the generated website.
+
+POST:
+
+/api/image
+
+Body:
+
+{
+    "prompt": "coffee shop interior"
+}
+
 ========================================================
 */
 
-async function processAIImages(
-    html,
+async function generateImage(
+    request,
     env
 ) {
 
     /*
-    Find:
-
-    data-ai-image="..."
-
+    ----------------------------------------------------
+    CHECK AI
+    ----------------------------------------------------
     */
 
-    const regex =
-        /data-ai-image=["']([^"']+)["']/gi;
+    if (!env.AI) {
+
+        return jsonResponse({
+
+            success: false,
+
+            error:
+                "AI binding is missing."
+
+        }, 500);
+
+    }
 
 
-    const matches = [];
+    /*
+    ----------------------------------------------------
+    READ REQUEST
+    ----------------------------------------------------
+    */
 
-    let match;
+    let body;
+
+    try {
+
+        body =
+            await request.json();
+
+    }
+
+    catch {
+
+        return jsonResponse({
+
+            success: false,
+
+            error:
+                "Invalid JSON."
+
+        }, 400);
+
+    }
 
 
-    while (
-        (match = regex.exec(html)) !== null
-    ) {
+    const prompt =
+        typeof body?.prompt === "string"
+            ? body.prompt.trim()
+            : "";
 
-        const description =
-            match[1].trim();
+
+    if (!prompt) {
+
+        return jsonResponse({
+
+            success: false,
+
+            error:
+                "Image prompt is required."
+
+        }, 400);
+
+    }
+
+
+    /*
+    ----------------------------------------------------
+    LIMIT PROMPT
+    ----------------------------------------------------
+    */
+
+    const imagePrompt =
+        prompt.substring(
+            0,
+            2048
+        );
+
+
+    /*
+    ----------------------------------------------------
+    GENERATE IMAGE
+    ----------------------------------------------------
+    */
+
+    try {
+
+        const result =
+            await env.AI.run(
+                IMAGE_MODEL,
+                {
+
+                    prompt:
+                        imagePrompt,
+
+                    steps: 4,
+
+                    seed:
+                        Math.floor(
+                            Math.random() *
+                            999999999
+                        )
+
+                }
+            );
 
 
         if (
-            description &&
-            !matches.includes(description)
+            !result ||
+            !result.image
         ) {
 
-            matches.push(description);
+            return jsonResponse({
+
+                success: false,
+
+                error:
+                    "Image AI returned no image."
+
+            }, 500);
 
         }
 
 
         /*
-        Maximum 4 images per website.
+        ------------------------------------------------
+        RETURN IMAGE
+        ------------------------------------------------
         */
 
-        if (matches.length >= 4) {
+        return jsonResponse({
 
-            break;
+            success: true,
 
-        }
+            image:
+                "data:image/jpeg;base64," +
+                result.image
 
-    }
-
-
-    /*
-    No images requested.
-    */
-
-    if (!matches.length) {
-
-        return html;
-
-    }
-
-
-    /*
-    If image AI is unavailable,
-    leave placeholders alone.
-    */
-
-    if (!env.AI) {
-
-        return html;
-
-    }
-
-
-    /*
-    KV is needed to store generated images.
-    */
-
-    const kv = getKV(env);
-
-
-    /*
-    If KV isn't available, we can still generate
-    images as data URIs, but that can make the HTML
-    extremely large.
-
-    Therefore, for safety, don't embed huge images.
-    */
-
-    if (!kv) {
-
-        console.warn(
-            "No KV binding available for AI images."
-        );
-
-        return html;
-
-    }
-
-
-    let updatedHTML = html;
-
-
-    /*
-    --------------------------------------------
-    Generate images one by one
-    --------------------------------------------
-    */
-
-    for (
-        let i = 0;
-        i < matches.length;
-        i++
-    ) {
-
-        const description =
-            matches[i];
-
-
-        try {
-
-            console.log(
-                "Generating AI image:",
-                description
-            );
-
-
-            const imageResult =
-                await env.AI.run(
-                    IMAGE_MODEL,
-                    {
-                        prompt:
-                            description,
-
-                        steps: 4,
-
-                        seed:
-                            Math.floor(
-                                Math.random() *
-                                2147483647
-                            )
-
-                    }
-                );
-
-
-            if (
-                !imageResult ||
-                !imageResult.image
-            ) {
-
-                console.warn(
-                    "No image returned for:",
-                    description
-                );
-
-                continue;
-
-            }
-
-
-            /*
-            ------------------------------------
-            Create unique image ID
-            ------------------------------------
-            */
-
-            const imageId =
-                createID();
-
-
-            /*
-            ------------------------------------
-            Save image in KV
-            ------------------------------------
-            */
-
-            await kv.put(
-
-                "image:" + imageId,
-
-                imageResult.image,
-
-                {
-
-                    expirationTtl:
-                        60 * 60 * 24 * 30
-
-                }
-
-            );
-
-
-            /*
-            ------------------------------------
-            Replace image placeholder with
-            WebCraft image endpoint.
-            ------------------------------------
-            */
-
-            const escapedDescription =
-                escapeRegExp(
-                    description
-                );
-
-
-            const imageRegex =
-                new RegExp(
-                    `data-ai-image=["']${escapedDescription}["']`,
-                    "i"
-                );
-
-
-            updatedHTML =
-                updatedHTML.replace(
-
-                    imageRegex,
-
-                    `src="/api/image/${imageId}" data-ai-image="${escapeAttribute(description)}"`
-
-                );
-
-
-            /*
-            If the AI didn't put src before the
-            data attribute, we have now inserted it.
-            */
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Failed generating image:",
-                description,
-                error
-            );
-
-        }
-
-    }
-
-
-    return updatedHTML;
-
-}
-
-
-/*
-========================================================
- SERVE AI IMAGE
-========================================================
-*/
-
-async function getImage(
-    request,
-    env
-) {
-
-    const url =
-        new URL(request.url);
-
-
-    /*
-    Get everything after:
-
-    /api/image/
-    */
-
-    const imageId =
-        decodeURIComponent(
-            url.pathname.substring(
-                "/api/image/".length
-            )
-        );
-
-
-    if (!imageId) {
-
-        return new Response(
-            "Image ID missing.",
-            {
-                status: 400
-            }
-        );
-
-    }
-
-
-    const kv =
-        getKV(env);
-
-
-    if (!kv) {
-
-        return new Response(
-            "Image storage is not configured.",
-            {
-                status: 500
-            }
-        );
-
-    }
-
-
-    /*
-    --------------------------------------------
-    Read Base64 image
-    --------------------------------------------
-    */
-
-    const base64 =
-        await kv.get(
-            "image:" + imageId
-        );
-
-
-    if (!base64) {
-
-        return new Response(
-            "Image not found or expired.",
-            {
-                status: 404
-            }
-        );
-
-    }
-
-
-    /*
-    --------------------------------------------
-    Convert Base64 to binary
-    --------------------------------------------
-    */
-
-    try {
-
-        const binaryString =
-            atob(base64);
-
-
-        const bytes =
-            new Uint8Array(
-                binaryString.length
-            );
-
-
-        for (
-            let i = 0;
-            i < binaryString.length;
-            i++
-        ) {
-
-            bytes[i] =
-                binaryString.charCodeAt(i);
-
-        }
-
-
-        return new Response(
-            bytes,
-            {
-
-                status: 200,
-
-                headers: {
-
-                    "Content-Type":
-                        "image/jpeg",
-
-                    "Cache-Control":
-                        "public, max-age=2592000",
-
-                    ...corsHeaders()
-
-                }
-
-            }
-        );
+        });
 
     }
 
     catch (error) {
 
         console.error(
-            "IMAGE DECODE ERROR:",
+            "IMAGE AI ERROR:",
             error
         );
 
+        return jsonResponse({
 
-        return new Response(
-            "Could not decode image.",
-            {
-                status: 500
-            }
-        );
+            success: false,
+
+            error:
+                "AI image generation failed: " +
+                (
+                    error?.message ||
+                    "Unknown image error."
+                )
+
+        }, 500);
 
     }
 
-}
-
-
-/*
-========================================================
- CREATE RANDOM ID
-========================================================
-*/
-
-function createID() {
-
-    return (
-
-        Date.now().toString(36) +
-
-        "-" +
-
-        Math.random()
-            .toString(36)
-            .substring(2, 12)
-
-    );
-
-}
-
-
-/*
-========================================================
- ESCAPE REGULAR EXPRESSION
-========================================================
-*/
-
-function escapeRegExp(text) {
-
-    return text.replace(
-        /[.*+?^${}()|[\]\\]/g,
-        "\\$&"
-    );
-
-}
-
-
-/*
-========================================================
- ESCAPE HTML ATTRIBUTE
-========================================================
-*/
-
-function escapeAttribute(text) {
-
-    return text
-
-        .replace(
-            /&/g,
-            "&amp;"
-        )
-
-        .replace(
-            /"/g,
-            "&quot;"
-        )
-
-        .replace(
-            /</g,
-            "&lt;"
-        )
-
-        .replace(
-            />/g,
-            "&gt;"
-        );
-
-         }
+ }
