@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -24,7 +25,8 @@ body {
 }
 
 button,
-textarea {
+textarea,
+input {
     font-family: inherit;
 }
 
@@ -144,6 +146,89 @@ button:active {
     opacity: .55;
     cursor: not-allowed;
 }
+
+/* IMAGE UPLOAD */
+
+.image-upload-box {
+    margin-top: 14px;
+    padding: 15px;
+    background: #191920;
+    border: 1px solid #292933;
+    border-radius: 12px;
+}
+
+.image-upload-title {
+    font-size: 14px;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.image-upload-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+}
+
+#imageInput {
+    display: none;
+}
+
+.image-select-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 45px;
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: #25252f;
+    border: 1px solid #363642;
+    color: white;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.image-select-btn:hover {
+    border-color: #9b5cff;
+}
+
+#imageName {
+    color: #9999a5;
+    font-size: 13px;
+    word-break: break-word;
+}
+
+.image-preview-box {
+    display: none;
+    margin-top: 12px;
+    position: relative;
+    width: 150px;
+}
+
+#uploadedImagePreview {
+    display: block;
+    width: 150px;
+    height: 100px;
+    object-fit: cover;
+    border-radius: 10px;
+    border: 1px solid #34343f;
+}
+
+.remove-image-btn {
+    position: absolute;
+    top: -8px;
+    right: -8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: #ff5555;
+    color: white;
+    font-size: 14px;
+    padding: 0;
+}
+
+/* STATUS */
 
 #status {
     min-height: 30px;
@@ -310,6 +395,23 @@ button:active {
         min-height: 52px;
     }
 
+    .image-upload-box {
+        padding: 12px;
+    }
+
+    .image-upload-row {
+        align-items: stretch;
+        flex-direction: column;
+    }
+
+    .image-select-btn {
+        width: 100%;
+    }
+
+    #imageName {
+        padding-top: 3px;
+    }
+
     .preview-wrapper {
         padding: 15px 8px 30px;
     }
@@ -323,6 +425,8 @@ button:active {
 </head>
 
 <body>
+
+<!-- TOP BAR -->
 
 <header class="topbar">
 
@@ -351,6 +455,8 @@ button:active {
 </header>
 
 
+<!-- EDITOR -->
+
 <section class="editor">
 
     <div class="editor-inner">
@@ -369,7 +475,9 @@ Example:
 Change the colors to green and white.
 Add a WhatsApp button.
 Make the hero section more attractive.
-Add a pricing section."></textarea>
+Add a pricing section.
+Use my uploaded image as the hero image."
+            ></textarea>
 
             <button
                 type="button"
@@ -380,12 +488,69 @@ Add a pricing section."></textarea>
 
         </div>
 
+
+        <!-- IMAGE UPLOAD -->
+
+        <div class="image-upload-box">
+
+            <div class="image-upload-title">
+                📷 Add an image to your website
+            </div>
+
+            <div class="image-upload-row">
+
+                <label
+                    for="imageInput"
+                    class="image-select-btn">
+
+                    📁 Choose Image
+
+                </label>
+
+                <input
+                    type="file"
+                    id="imageInput"
+                    accept="image/*"
+                >
+
+                <span id="imageName">
+                    No image selected
+                </span>
+
+            </div>
+
+
+            <div
+                id="imagePreviewBox"
+                class="image-preview-box">
+
+                <img
+                    id="uploadedImagePreview"
+                    alt="Uploaded image preview"
+                >
+
+                <button
+                    type="button"
+                    class="remove-image-btn"
+                    onclick="removeUploadedImage()">
+
+                    ×
+
+                </button>
+
+            </div>
+
+        </div>
+
+
         <div id="status"></div>
 
     </div>
 
 </section>
 
+
+<!-- DEVICE TOOLBAR -->
 
 <div class="device-toolbar">
 
@@ -394,7 +559,9 @@ Add a pricing section."></textarea>
         class="device-btn active"
         id="desktopBtn"
         onclick="setDevice('desktop')">
+
         🖥️ Desktop
+
     </button>
 
     <button
@@ -402,7 +569,9 @@ Add a pricing section."></textarea>
         class="device-btn"
         id="tabletBtn"
         onclick="setDevice('tablet')">
+
         📱 Tablet
+
     </button>
 
     <button
@@ -410,17 +579,23 @@ Add a pricing section."></textarea>
         class="device-btn"
         id="mobileBtn"
         onclick="setDevice('mobile')">
+
         📱 Mobile
+
     </button>
 
     <span
         class="device-label"
         id="deviceLabel">
+
         Desktop — 1400px
+
     </span>
 
 </div>
 
+
+<!-- PREVIEW -->
 
 <main class="preview-wrapper">
 
@@ -429,7 +604,9 @@ Add a pricing section."></textarea>
         class="empty"
         style="display:none;">
 
-        <h2>No website found</h2>
+        <h2>
+            No website found
+        </h2>
 
         <p>
             Generate a website first before opening the preview.
@@ -439,7 +616,9 @@ Add a pricing section."></textarea>
             type="button"
             class="create-btn"
             onclick="goBack()">
+
             ✨ Create Website
+
         </button>
 
     </div>
@@ -504,19 +683,45 @@ const emptyState =
 const deviceLabel =
     document.getElementById("deviceLabel");
 
+const imageInput =
+    document.getElementById("imageInput");
+
+const imageName =
+    document.getElementById("imageName");
+
+const imagePreviewBox =
+    document.getElementById("imagePreviewBox");
+
+const uploadedImagePreview =
+    document.getElementById(
+        "uploadedImagePreview"
+    );
+
+
+/* =====================================
+   IMAGE DATA
+===================================== */
+
+let uploadedImageData = null;
+
 
 /* =====================================
    LOAD GENERATED WEBSITE
 ===================================== */
 
 let website =
-    localStorage.getItem("generatedWebsite");
+    localStorage.getItem(
+        "generatedWebsite"
+    );
 
 
 if (!website) {
 
-    previewStage.style.display = "none";
-    emptyState.style.display = "flex";
+    previewStage.style.display =
+        "none";
+
+    emptyState.style.display =
+        "flex";
 
     showStatus(
         "No generated website found.",
@@ -525,10 +730,146 @@ if (!website) {
 
 } else {
 
-    previewStage.style.display = "flex";
-    emptyState.style.display = "none";
+    previewStage.style.display =
+        "flex";
 
-    preview.srcdoc = website;
+    emptyState.style.display =
+        "none";
+
+    preview.srcdoc =
+        website;
+
+}
+
+
+/* =====================================
+   IMAGE SELECTED
+===================================== */
+
+imageInput.addEventListener(
+    "change",
+    function() {
+
+        const file =
+            imageInput.files &&
+            imageInput.files[0];
+
+        if (!file) {
+            return;
+        }
+
+        if (!file.type.startsWith("image/")) {
+
+            showStatus(
+                "❌ Please choose an image file.",
+                "error"
+            );
+
+            imageInput.value = "";
+
+            return;
+        }
+
+
+        /*
+         * Maximum image size:
+         * 5MB
+         */
+
+        const maxSize =
+            5 * 1024 * 1024;
+
+
+        if (file.size > maxSize) {
+
+            showStatus(
+                "❌ Image is too large. Please choose an image under 5MB.",
+                "error"
+            );
+
+            imageInput.value = "";
+
+            return;
+        }
+
+
+        imageName.textContent =
+            file.name;
+
+
+        const reader =
+            new FileReader();
+
+
+        reader.onload =
+            function(event) {
+
+                uploadedImageData =
+                    event.target.result;
+
+
+                uploadedImagePreview.src =
+                    uploadedImageData;
+
+
+                imagePreviewBox.style.display =
+                    "block";
+
+
+                showStatus(
+                    "📷 Image ready. Tell the AI what to do with it.",
+                    "success"
+                );
+
+            };
+
+
+        reader.onerror =
+            function() {
+
+                uploadedImageData =
+                    null;
+
+                showStatus(
+                    "❌ Could not read the image.",
+                    "error"
+                );
+
+            };
+
+
+        reader.readAsDataURL(file);
+
+    }
+);
+
+
+/* =====================================
+   REMOVE IMAGE
+===================================== */
+
+function removeUploadedImage() {
+
+    uploadedImageData =
+        null;
+
+    imageInput.value =
+        "";
+
+    imageName.textContent =
+        "No image selected";
+
+    uploadedImagePreview.removeAttribute(
+        "src"
+    );
+
+    imagePreviewBox.style.display =
+        "none";
+
+    showStatus(
+        "Image removed.",
+        "success"
+    );
 
 }
 
@@ -539,21 +880,36 @@ if (!website) {
 
 function showStatus(message, type) {
 
-    status.textContent = message;
+    status.textContent =
+        message;
 
-    status.className = "";
+    status.className =
+        "";
 
     if (type === "success") {
-        status.classList.add("status-success");
+
+        status.classList.add(
+            "status-success"
+        );
+
     }
 
     if (type === "error") {
-        status.classList.add("status-error");
+
+        status.classList.add(
+            "status-error"
+        );
+
     }
 
     if (type === "loading") {
-        status.classList.add("status-loading");
+
+        status.classList.add(
+            "status-loading"
+        );
+
     }
+
 }
 
 
@@ -563,7 +919,8 @@ function showStatus(message, type) {
 
 function goBack() {
 
-    window.location.href = "/";
+    window.location.href =
+        "/";
 
 }
 
@@ -580,7 +937,10 @@ function setDevice(device) {
         "mobile"
     );
 
-    previewContainer.classList.add(device);
+    previewContainer.classList.add(
+        device
+    );
+
 
     document
         .getElementById("desktopBtn")
@@ -653,6 +1013,313 @@ async function editWebsite() {
         editPrompt.focus();
 
         return;
+    }
+
+
+    if (!website) {
+
+        showStatus(
+            "❌ No website is available to edit.",
+            "error"
+        );
+
+        return;
+    }
+
+
+    editBtn.disabled =
+        true;
+
+    editBtn.textContent =
+        "✨ Editing...";
+
+
+    showStatus(
+        uploadedImageData
+            ? "🧠 AI is updating your website with your image..."
+            : "🧠 AI is updating your website...",
+        "loading"
+    );
+
+
+    try {
+
+        const requestBody = {
+
+            mode: "edit",
+
+            prompt: instruction,
+
+            website: website
+
+        };
+
+
+        /*
+         * Add image only when
+         * an image was selected.
+         */
+
+        if (uploadedImageData) {
+
+            requestBody.image =
+                uploadedImageData;
+
+        }
+
+
+        const response =
+            await fetch(
+                AI_URL,
+                {
+                    method: "POST",
+
+                    headers: {
+                        "Content-Type":
+                            "application/json",
+
+                        "Accept":
+                            "application/json"
+                    },
+
+                    body:
+                        JSON.stringify(
+                            requestBody
+                        )
+                }
+            );
+
+
+        /*
+         * Read response as text first.
+         */
+
+        const responseText =
+            await response.text();
+
+
+        console.log(
+            "WebCraft AI HTTP:",
+            response.status
+        );
+
+
+        console.log(
+            "WebCraft AI response:",
+            responseText
+        );
+
+
+        if (!responseText.trim()) {
+
+            throw new Error(
+                "The AI server returned an empty response. HTTP " +
+                response.status
+            );
+
+        }
+
+
+        let data;
+
+
+        try {
+
+            data =
+                JSON.parse(
+                    responseText
+                );
+
+        } catch (jsonError) {
+
+            throw new Error(
+                "The AI server returned an invalid response. HTTP " +
+                response.status
+            );
+
+        }
+
+
+        if (
+            !response.ok ||
+            !data ||
+            data.success !== true
+        ) {
+
+            throw new Error(
+                data && data.error
+                    ? data.error
+                    : "Website editing failed."
+            );
+
+        }
+
+
+        if (
+            typeof data.website !== "string" ||
+            data.website.trim().length < 50
+        ) {
+
+            throw new Error(
+                "AI returned an incomplete website."
+            );
+
+        }
+
+
+        /*
+         * Get new website.
+         */
+
+        website =
+            data.website.trim();
+
+
+        /*
+         * Save updated website.
+         */
+
+        localStorage.setItem(
+            "generatedWebsite",
+            website
+        );
+
+
+        /*
+         * Save latest instruction.
+         */
+
+        localStorage.setItem(
+            "websitePrompt",
+            instruction
+        );
+
+
+        /*
+         * Update preview.
+         */
+
+        preview.srcdoc =
+            website;
+
+
+        /*
+         * Clear editor.
+         */
+
+        editPrompt.value =
+            "";
+
+
+        /*
+         * Clear uploaded image
+         * after successful edit.
+         */
+
+        uploadedImageData =
+            null;
+
+
+        imageInput.value =
+            "";
+
+
+        imageName.textContent =
+            "No image selected";
+
+
+        uploadedImagePreview.removeAttribute(
+            "src"
+        );
+
+
+        imagePreviewBox.style.displ       imagePreviewBox.style.display =
+        "none";
+
+
+    /*
+     * Hide the remove button
+     */
+
+    removeImageBtn.style.display =
+        "none";
+
+
+    /*
+     * Reset image input
+     */
+
+    imageInput.value = "";
+
+
+    /*
+     * Clear image preview
+     */
+
+    uploadedImagePreview.removeAttribute(
+        "src"
+    );
+
+
+    /*
+     * Clear image name
+     */
+
+    imageName.textContent =
+        "No image selected";
+
+}
+
+
+/* =====================================
+   INITIALIZE IMAGE UPLOAD
+===================================== */
+
+imageInput.addEventListener(
+    "change",
+    handleImageUpload
+);
+
+
+/* =====================================
+   REMOVE IMAGE
+===================================== */
+
+removeImageBtn.addEventListener(
+    "click",
+    function () {
+
+        clearUploadedImage();
+
+        showStatus(
+            "🗑️ Image removed.",
+            "success"
+        );
+
+    }
+);
+
+
+/* =====================================
+   EDIT PROMPT + IMAGE
+===================================== */
+
+async function editWebsite() {
+
+    const instruction =
+        editPrompt.value.trim();
+
+
+    if (!instruction) {
+
+        showStatus(
+            "⚠️ Tell the AI what you want to change.",
+            "error"
+        );
+
+        editPrompt.focus();
+
+        return;
 
     }
 
@@ -676,7 +1343,9 @@ async function editWebsite() {
 
 
     showStatus(
-        "🧠 AI is updating your website...",
+        uploadedImageData
+            ? "🧠 AI is updating your website with your image..."
+            : "🧠 AI is updating your website...",
         "loading"
     );
 
@@ -703,22 +1372,14 @@ async function editWebsite() {
 
                         prompt: instruction,
 
-                        website: website
+                        website: website,
+
+                        image: uploadedImageData || null
 
                     })
                 }
             );
 
-
-        /*
-         * Read the response as text first.
-         * This prevents the annoying:
-         *
-         * Unexpected end of JSON input
-         *
-         * error when the server sends an
-         * empty response.
-         */
 
         const responseText =
             await response.text();
@@ -728,6 +1389,7 @@ async function editWebsite() {
             "WebCraft AI HTTP:",
             response.status
         );
+
 
         console.log(
             "WebCraft AI response:",
@@ -746,6 +1408,7 @@ async function editWebsite() {
 
 
         let data;
+
 
         try {
 
@@ -789,17 +1452,9 @@ async function editWebsite() {
         }
 
 
-        /*
-         * Get the new website.
-         */
-
         website =
             data.website.trim();
 
-
-        /*
-         * Save it.
-         */
 
         localStorage.setItem(
             "generatedWebsite",
@@ -807,29 +1462,26 @@ async function editWebsite() {
         );
 
 
-        /*
-         * Save the latest instruction.
-         */
-
         localStorage.setItem(
             "websitePrompt",
             instruction
         );
 
 
-        /*
-         * Update the preview.
-         */
-
         preview.srcdoc =
             website;
 
 
+        editPrompt.value =
+            "";
+
+
         /*
-         * Clear the editing box.
+         * Clear uploaded image after
+         * successful edit.
          */
 
-        editPrompt.value = "";
+        clearUploadedImage();
 
 
         showStatus(
@@ -858,7 +1510,8 @@ async function editWebsite() {
 
     } finally {
 
-        editBtn.disabled = false;
+        editBtn.disabled =
+            false;
 
         editBtn.textContent =
             "✨ Edit Website";
@@ -890,7 +1543,8 @@ function downloadWebsite() {
         new Blob(
             [website],
             {
-                type: "text/html;charset=utf-8"
+                type:
+                    "text/html;charset=utf-8"
             }
         );
 
@@ -903,22 +1557,32 @@ function downloadWebsite() {
         document.createElement("a");
 
 
-    link.href = url;
+    link.href =
+        url;
+
 
     link.download =
         "webcraft-ai-website.html";
 
 
-    document.body.appendChild(link);
+    document.body.appendChild(
+        link
+    );
+
 
     link.click();
+
 
     link.remove();
 
 
     setTimeout(
         function () {
-            URL.revokeObjectURL(url);
+
+            URL.revokeObjectURL(
+                url
+            );
+
         },
         1000
     );
@@ -952,7 +1616,56 @@ editPrompt.addEventListener(
     }
 );
 
+
+/* =====================================
+   DRAG AND DROP IMAGE SUPPORT
+===================================== */
+
+imagePreviewBox.addEventListener(
+    "dragover",
+    function(event) {
+
+        event.preventDefault();
+
+    }
+);
+
+
+imagePreviewBox.addEventListener(
+    "drop",
+    function(event) {
+
+        event.preventDefault();
+
+
+        const files =
+            event.dataTransfer.files;
+
+
+        if (
+            files &&
+            files.length > 0
+        ) {
+
+            processImageFile(
+                files[0]
+            );
+
+        }
+
+    }
+);
+
+
+/* =====================================
+   PAGE READY
+===================================== */
+
+console.log(
+    "✨ WebCraft AI Preview loaded successfully."
+);
+
 </script>
 
 </body>
-    </html>
+</html>       
