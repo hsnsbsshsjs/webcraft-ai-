@@ -1,29 +1,60 @@
 /*
 ========================================================
-WEBCRAFT AI - WORKER
+ WEBCRAFT AI
+ AI WEBSITE GENERATOR + EDITOR
 ========================================================
-Features:
-- Serves index.html through Cloudflare Assets
-- AI website generation
-- AI website editing
-- CORS support
-- Uses current non-deprecated Llama model
-- Safe JSON/error handling
+
+ Required Wrangler binding:
+
+ "ai": {
+   "binding": "AI"
+ }
+
+ This Worker provides:
+
+ POST /api/generate
+
+ mode: "create"
+ mode: "edit"
+
+ Optional image:
+ image: "data:image/jpeg;base64,..."
+
 ========================================================
 */
 
-const AI_MODEL = "@cf/meta/llama-3.1-8b-instruct-fast";
 
-const corsHeaders = {
+/* ======================================================
+   CONFIGURATION
+====================================================== */
+
+const MODEL =
+    "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+
+/* ======================================================
+   CORS
+====================================================== */
+
+const CORS_HEADERS = {
+
     "Access-Control-Allow-Origin": "*",
-    "Access-Control-Allow-Methods": "GET, POST, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept"
+
+    "Access-Control-Allow-Methods":
+        "GET, POST, OPTIONS",
+
+    "Access-Control-Allow-Headers":
+        "Content-Type, Authorization",
+
+    "Access-Control-Max-Age":
+        "86400"
+
 };
 
 
-/* =====================================================
-   RESPONSE HELPERS
-===================================================== */
+/* ======================================================
+   JSON RESPONSE
+====================================================== */
 
 function jsonResponse(data, status = 200) {
 
@@ -31,9 +62,12 @@ function jsonResponse(data, status = 200) {
         JSON.stringify(data),
         {
             status,
+
             headers: {
-                ...corsHeaders,
-                "Content-Type": "application/json; charset=UTF-8"
+                "Content-Type":
+                    "application/json; charset=utf-8",
+
+                ...CORS_HEADERS
             }
         }
     );
@@ -41,563 +75,1241 @@ function jsonResponse(data, status = 200) {
 }
 
 
-function errorResponse(message, status = 500) {
+/* ======================================================
+   HTML RESPONSE
+====================================================== */
 
-    return jsonResponse(
+function htmlResponse(html, status = 200) {
+
+    return new Response(
+        html,
         {
-            success: false,
-            error: message
-        },
-        status
+            status,
+
+            headers: {
+                "Content-Type":
+                    "text/html; charset=utf-8",
+
+                ...CORS_HEADERS
+            }
+        }
     );
 
 }
 
 
-/* =====================================================
+/* ======================================================
    CLEAN AI OUTPUT
-===================================================== */
+====================================================== */
 
-function cleanWebsiteOutput(text) {
+function cleanAIOutput(text) {
 
     if (!text) {
         return "";
     }
 
-    let website = String(text).trim();
+    let result =
+        String(text).trim();
+
 
     /*
-     Remove markdown code fences if the AI
-     accidentally returns them.
+     Remove markdown code fences.
     */
 
-    website = website
-        .replace(/^```html\s*/i, "")
-        .replace(/^```HTML\s*/i, "")
-        .replace(/^```\s*/i, "")
-        .replace(/\s*```$/i, "")
-        .trim();
+    result =
+        result.replace(
+            /^```html\s*/i,
+            ""
+        );
+
+    result =
+        result.replace(
+            /^```\s*/i,
+            ""
+        );
+
+    result =
+        result.replace(
+            /\s*```$/i,
+            ""
+        );
+
 
     /*
-     If the model adds text before <!DOCTYPE html>,
-     remove everything before the HTML document.
+     Sometimes the model puts explanations
+     before the HTML.
+
+     Try to start at <!DOCTYPE html>
+     if present.
     */
 
     const doctypeIndex =
-        website.toLowerCase().indexOf("<!doctype");
+        result.toLowerCase().indexOf(
+            "<!doctype html>"
+        );
 
     if (doctypeIndex > 0) {
 
-        website =
-            website.substring(doctypeIndex);
+        result =
+            result.substring(
+                doctypeIndex
+            );
 
-    } else {
+    }
+
+
+    /*
+     If the model forgot DOCTYPE but
+     returned <html>, start there.
+    */
+
+    if (
+        !result
+            .toLowerCase()
+            .startsWith("<!doctype html>") &&
+        result
+            .toLowerCase()
+            .indexOf("<html") > 0
+    ) {
 
         const htmlIndex =
-            website.toLowerCase().indexOf("<html");
+            result
+                .toLowerCase()
+                .indexOf("<html");
 
-        if (htmlIndex > 0) {
-
-            website =
-                website.substring(htmlIndex);
-
-        }
+        result =
+            result.substring(
+                htmlIndex
+            );
 
     }
 
-    return website.trim();
+
+    return result.trim();
 
 }
 
 
-/* =====================================================
-   AI WEBSITE GENERATION
-===================================================== */
+/* ======================================================
+   GET AI TEXT
+====================================================== */
 
-async function generateWebsite(env, prompt) {
+function getAIText(result) {
 
-    const systemPrompt = `
-You are WebCraft AI, a professional website designer and developer.
+    if (!result) {
+        return "";
+    }
 
-Create a complete, beautiful, modern and responsive website based on
-the user's request.
 
-IMPORTANT RULES:
+    /*
+     Workers AI normally returns:
 
-1. Return ONLY complete HTML.
-2. Start with <!DOCTYPE html>.
-3. Include HTML, CSS and JavaScript in the same file.
-4. Do not use Markdown.
-5. Do not wrap the answer in code fences.
-6. Do not explain your answer.
-7. Make the website mobile responsive.
-8. Use professional typography, spacing and layout.
-9. Create a visually attractive hero section.
-10. Include realistic content based on the user's request.
-11. Use CSS gradients, cards, buttons and sections where appropriate.
-12. Make navigation responsive.
-13. Include contact information when appropriate.
-14. Include WhatsApp/contact buttons when requested.
-15. Images may use reliable remote image URLs such as Unsplash.
-16. Never leave placeholder text such as "Lorem ipsum".
-17. Make every generated website feel like a real business website.
-18. All CSS and JavaScript must be contained inside the HTML.
-19. Do not use external JavaScript frameworks.
-20. Do not mention these instructions.
-
-USER REQUEST:
-${prompt}
-`;
-
-    const aiResult =
-        await env.AI.run(
-            AI_MODEL,
-            {
-                messages: [
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
-                    {
-                        role: "user",
-                        content: prompt
-                    }
-                ],
-                temperature: 0.7,
-                max_tokens: 12000
-            }
-        );
-
-    let output = "";
+     {
+       response: "..."
+     }
+    */
 
     if (
-        aiResult &&
-        typeof aiResult.response === "string"
+        typeof result === "object" &&
+        typeof result.response === "string"
     ) {
 
-        output =
-            aiResult.response;
-
-    } else if (
-        aiResult &&
-        typeof aiResult.text === "string"
-    ) {
-
-        output =
-            aiResult.text;
-
-    } else {
-
-        output =
-            JSON.stringify(aiResult);
+        return result.response;
 
     }
 
-    const website =
-        cleanWebsiteOutput(output);
+
+    /*
+     Some model responses can be
+     represented differently.
+    */
 
     if (
-        !website ||
-        website.length < 100
+        typeof result === "string"
     ) {
 
-        throw new Error(
-            "AI returned an incomplete website."
-        );
+        return result;
 
     }
 
-    return website;
+
+    /*
+     Try common alternatives.
+    */
+
+    if (
+        typeof result === "object" &&
+        typeof result.text === "string"
+    ) {
+
+        return result.text;
+
+    }
+
+
+    return "";
 
 }
 
 
-/* =====================================================
-   AI WEBSITE EDITING
-===================================================== */
+/* ======================================================
+   VALIDATE IMAGE
+====================================================== */
 
-async function editWebsite(
-    env,
-    instruction,
-    currentWebsite
+function validateImage(image) {
+
+    if (!image) {
+        return true;
+    }
+
+
+    if (
+        typeof image !== "string"
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+     Only allow data URI images.
+
+     Example:
+
+     data:image/jpeg;base64,...
+    */
+
+    if (
+        !image.startsWith(
+            "data:image/"
+        )
+    ) {
+
+        return false;
+
+    }
+
+
+    /*
+     Prevent extremely large requests.
+     Approximately 6MB of encoded image.
+    */
+
+    const MAX_IMAGE_LENGTH =
+        8 * 1024 * 1024;
+
+
+    if (
+        image.length >
+        MAX_IMAGE_LENGTH
+    ) {
+
+        return false;
+
+    }
+
+
+    return true;
+
+}
+
+
+/* ======================================================
+   REPLACE IMAGE PLACEHOLDER
+====================================================== */
+
+function insertUploadedImage(
+    website,
+    image
 ) {
 
-    const systemPrompt = `
-You are WebCraft AI, an expert website editor.
-
-The user already has a complete HTML website.
-
-Your job is to modify the existing website according to the
-user's instruction.
-
-IMPORTANT RULES:
-
-1. Return ONLY the complete updated HTML.
-2. Start with <!DOCTYPE html>.
-3. Preserve everything that the user did not ask to change.
-4. Do not remove existing sections unnecessarily.
-5. Keep existing functionality unless the user asks to change it.
-6. Keep the website responsive.
-7. Keep CSS and JavaScript inside the HTML.
-8. Do not use Markdown.
-9. Do not use code fences.
-10. Do not explain anything.
-11. Return the ENTIRE website, not only the changed section.
-
-USER'S REQUEST:
-${instruction}
-
-CURRENT WEBSITE:
-${currentWebsite}
-`;
-
-    const aiResult =
-        await env.AI.run(
-            AI_MODEL,
-            {
-                messages: [
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
-                    {
-                        role: "user",
-                        content:
-                            "Edit the website according to my request."
-                    }
-                ],
-                temperature: 0.5,
-                max_tokens: 16000
-            }
-        );
-
-    let output = "";
-
     if (
-        aiResult &&
-        typeof aiResult.response === "string"
+        !image ||
+        !website
     ) {
 
-        output =
-            aiResult.response;
-
-    } else if (
-        aiResult &&
-        typeof aiResult.text === "string"
-    ) {
-
-        output =
-            aiResult.text;
-
-    } else {
-
-        output =
-            JSON.stringify(aiResult);
+        return website;
 
     }
 
-    const website =
-        cleanWebsiteOutput(output);
+
+    /*
+     The AI is instructed to use:
+
+     __WEBCRAFT_UPLOADED_IMAGE__
+
+     Replace every occurrence.
+    */
+
+    let result =
+        website.replaceAll(
+            "__WEBCRAFT_UPLOADED_IMAGE__",
+            image
+        );
+
+
+    /*
+     Also support a second placeholder.
+    */
+
+    result =
+        result.replaceAll(
+            "{{UPLOADED_IMAGE}}",
+            image
+        );
+
+
+    return result;
+
+}
+
+
+/* ======================================================
+   BASIC HTML SAFETY
+====================================================== */
+
+function limitWebsiteSize(
+    website
+) {
+
+    /*
+     Keep extremely abnormal responses
+     from being returned.
+
+     Normal websites should fit comfortably
+     below this.
+    */
+
+    const MAX_WEBSITE_LENGTH =
+        500000;
+
 
     if (
-        !website ||
-        website.length < 100
+        website.length >
+        MAX_WEBSITE_LENGTH
     ) {
 
-        throw new Error(
-            "AI returned an incomplete edited website."
+        return website.substring(
+            0,
+            MAX_WEBSITE_LENGTH
         );
 
     }
+
 
     return website;
 
 }
 
 
-/* =====================================================
-   MAIN WORKER
-===================================================== */
+/* ======================================================
+   CREATE WEBSITE SYSTEM PROMPT
+====================================================== */
 
-export default {
+const CREATE_SYSTEM_PROMPT = `
 
-    async fetch(request, env) {
+You are WebCraft AI, a professional senior website designer,
+UX designer, copywriter and frontend developer.
 
-        /*
-        Handle CORS preflight.
-        */
+Your job is to create COMPLETE, PREMIUM, PROFESSIONAL,
+REAL-WORLD BUSINESS WEBSITES.
 
-        if (
-            request.method === "OPTIONS"
-        ) {
+The website must NEVER look like a short demo, toy project,
+school assignment or basic template.
 
-            return new Response(
-                null,
-                {
-                    status: 204,
-                    headers: corsHeaders
-                }
-            );
+The user may provide only a short description.
 
-        }
+You must intelligently expand that information into a
+complete professional website without inventing dangerous
+or obviously false claims.
 
+============================================================
+OUTPUT RULE
+============================================================
 
-        const url =
-            new URL(request.url);
+Return ONLY the complete HTML document.
 
+Start with:
 
-        /* =================================================
-           API
-        ================================================= */
+<!DOCTYPE html>
 
-        if (
-            url.pathname === "/api/generate"
-        ) {
+End with:
 
-            if (
-                request.method !== "POST"
-            ) {
+</html>
 
-                return errorResponse(
-                    "Only POST requests are allowed.",
-                    405
-                );
+DO NOT explain the website.
 
-            }
+DO NOT use Markdown.
 
+DO NOT use:
 
-            try {
+\`\`\`html
 
-                /*
-                Check AI binding.
-                */
+DO NOT put explanations before or after the HTML.
 
-                if (!env.AI) {
+============================================================
+TECHNOLOGY
+============================================================
 
-                    return errorResponse(
-                        "Workers AI binding is missing. Check your wrangler.jsonc file.",
-                        500
-                    );
+Create a complete self-contained website.
 
-                }
+Use:
 
+HTML5
+CSS3
+JavaScript
 
-                const body =
-                    await request.json();
+Put CSS inside:
 
+<style>
 
-                const mode =
-                    body.mode || "create";
+Put JavaScript inside:
 
+<script>
 
-                const prompt =
-                    typeof body.prompt === "string"
-                        ? body.prompt.trim()
-                        : "";
+Do not require npm.
 
+Do not require React.
 
-                if (!prompt) {
+Do not require external build tools.
 
-                    return errorResponse(
-                        "Please provide a website prompt.",
-                        400
-                    );
+The website must work when saved as a single .html file.
 
-                }
+============================================================
+DESIGN QUALITY
+============================================================
 
+The website must look like it was designed by a professional
+web agency.
 
-                /* =========================================
-                   CREATE
-                ========================================= */
+Use:
 
-                if (
-                    mode === "create"
-                ) {
+- strong visual hierarchy
+- modern typography
+- excellent spacing
+- professional navigation
+- polished buttons
+- attractive cards
+- responsive layouts
+- subtle animations
+- hover effects
+- professional color palette
+- modern hero section
+- attractive section transitions
+- mobile navigation
+- good accessibility
+- readable contrast
+- premium visual presentation
 
-                    const website =
-                        await generateWebsite(
-                            env,
-                            prompt
-                        );
+Avoid:
 
+- huge empty spaces
+- childish designs
+- excessive gradients
+- generic plain text
+- tiny sections
+- unfinished sections
+- placeholder paragraphs
+- lorem ipsum
+- "coming soon"
+- "website generated by AI"
+- fake testimonials presented as real
+- fake awards
+- fake certifications
+- fake statistics
 
-                    return jsonResponse(
-                        {
-                            success: true,
-                            website: website
-                        }
-                    );
+============================================================
+BUSINESS UNDERSTANDING
+============================================================
 
-                }
+Study the user's description carefully.
 
+Identify:
 
-                /* =========================================
-                   EDIT
-                ========================================= */
+- business type
+- business name
+- location
+- services
+- products
+- target customers
+- important benefits
+- contact information
+- opening hours
+- calls to action
+- unique selling points
 
-                if (
-                    mode === "edit"
-                ) {
+If information is missing, write useful neutral copy based
+on the business type.
 
-                    const currentWebsite =
-                        typeof body.website === "string"
-                            ? body.website.trim()
-                            : "";
+Do NOT invent specific phone numbers,
+email addresses, addresses or prices.
 
+If information is not provided, use sensible labels such as:
 
-                    if (!currentWebsite) {
+"Contact us for pricing"
 
-                        return errorResponse(
-                            "No existing website was supplied for editing.",
-                            400
-                        );
+"Call us to discuss your requirements"
 
-                    }
+"Visit us"
 
+rather than inventing factual information.
 
-                    const website =
-                        await editWebsite(
-                            env,
-                            prompt,
-                            currentWebsite
-                        );
+============================================================
+WEBSITE LENGTH
+============================================================
 
+Create a substantial website.
 
-                    return jsonResponse(
-                        {
-                            success: true,
-                            website: website
-                        }
-                    );
+Prefer approximately:
 
-                }
+250-450 lines of HTML/CSS/JS
 
+when appropriate.
 
-                return errorResponse(
-                    "Invalid mode. Use create or edit.",
-                    400
-                );
+The website should contain enough useful information to
+feel like a real business website.
 
+Do NOT artificially make sections long with meaningless text.
 
-            } catch (error) {
+============================================================
+REQUIRED STRUCTURE
+============================================================
 
-                console.error(
-                    "WebCraft AI error:",
-                    error
-                );
+Choose sections appropriate to the business.
 
+Normally include:
 
-                return errorResponse(
-                    error &&
-                    error.message
-                        ? error.message
-                        : "AI generation failed.",
-                    500
-                );
+1. Sticky navigation
 
-            }
-
-        }
-
-
-        /* =================================================
-           STATIC WEBSITE
-        ================================================= */
-
-        /*
-        Everything that isn't /api/generate should be
-        handled by Cloudflare Assets.
-        */
-
-        if (env.ASSETS) {
-
-            return env.ASSETS.fetch(
-                request
-            );
-
-        }
-
-
-        /*
-        This message makes the configuration problem
-        obvious instead of giving a mysterious 500 error.
-        */
-
-        return new Response(
-            `
-            <!DOCTYPE html>
-            <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>WebCraft AI</title>
-                <style>
-                    body {
-                        margin: 0;
-                        min-height: 100vh;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        background: #0b0b10;
-                        color: white;
-                        font-family: Arial, sans-serif;
-                        text-align: center;
-                        padding: 20px;
-                    }
-
-                    .box {
-                        max-width: 600px;
-                        padding: 30px;
-                        background: #15151d;
-                        border: 1px solid #292933;
-                        border-radius: 18px;
-                    }
-
-                    h1 {
-                        color: #9b5cff;
-                    }
-
-                    p {
-                        color: #aaa;
-                        line-height: 1.6;
-                    }
-                </style>
-            </head>
-
-            <body>
-
-                <div class="box">
-
-                    <h1>✨ WebCraft AI</h1>
-
-                    <p>
-                        The Worker is running correctly.
-                    </p>
-
-                    <p>
-                        However, your ASSETS binding is not
-                        configured yet.
-                    </p>
-
-                    <p>
-                        Check your wrangler.jsonc file and
-                        make sure the assets directory and
-                        ASSETS binding are configured.
-                    </p>
-
-                </div>
-
-            </body>
-            </html>
-            `,
-            {
-                status: 500,
-                headers: {
-                    ...corsHeaders,
-                    "Content-Type": "text/html; charset=UTF-8"
-                }
-            }
+2. Hero section
+   - strong headline
+   - supporting description
+   - primary CTA
+   - secondary CTA
+   - attractive visual
+
+3. About / company introduction
+
+4. Services or products
+
+5. Why choose us
+
+6. Detailed service/product information
+
+7. Process / how it works
+
+8. Gallery or visual showcase
+
+9. Testimonials section
+   Only if testimonials were supplied.
+   Otherwise create a "Why customers choose us"
+   section instead.
+
+10. FAQ
+
+11. Contact section
+
+12. Location information if provided
+
+13. Opening hours if provided
+
+14. Strong final CTA
+
+15. Professional footer
+
+============================================================
+CONTENT QUALITY
+============================================================
+
+Write specific useful copy.
+
+For example, instead of:
+
+"We offer cleaning services."
+
+write useful business-oriented copy describing:
+
+- what is cleaned
+- who the service is for
+- benefits
+- frequency
+- professional process
+- customer experience
+
+Do this intelligently for restaurants,
+schools, portfolios, construction companies,
+salons, hotels, shops, agencies, clinics,
+cleaning companies and other businesses.
+
+============================================================
+CALLS TO ACTION
+============================================================
+
+Use meaningful CTA buttons such as:
+
+Get a Quote
+Book a Service
+Contact Us
+Call Now
+WhatsApp Us
+View Services
+Explore Our Work
+Make an Enquiry
+Book Now
+
+Only use actions relevant to the business.
+
+============================================================
+WHATSAPP
+============================================================
+
+If a WhatsApp number is provided by the user,
+create a WhatsApp button using it.
+
+Never invent a WhatsApp number.
+
+============================================================
+IMAGES
+============================================================
+
+If the user uploads an image, use:
+
+__WEBCRAFT_UPLOADED_IMAGE__
+
+as the image source.
+
+Example:
+
+<img
+src="__WEBCRAFT_UPLOADED_IMAGE__"
+alt="Professional business image"
+>
+
+If an uploaded image exists, use it prominently,
+especially in the hero section when appropriate.
+
+If there is no uploaded image, use tasteful remote
+image URLs from Unsplash Source or Unsplash images
+when suitable.
+
+Do not make the website dependent on a local image file
+that does not exist.
+
+============================================================
+IMAGE DESIGN
+============================================================
+
+Use images in:
+
+- hero section
+- about section
+- services when useful
+- gallery
+- CTA sections when appropriate
+
+Do not overload the page with images.
+
+Use:
+
+object-fit: cover;
+
+rounded corners where appropriate.
+
+============================================================
+RESPONSIVENESS
+============================================================
+
+The website MUST work on:
+
+- Android phones
+- iPhones
+- tablets
+- laptops
+- desktop screens
+
+Include responsive CSS.
+
+Use media queries.
+
+Make navigation usable on mobile.
+
+============================================================
+ANIMATIONS
+============================================================
+
+Add tasteful JavaScript/CSS animations such as:
+
+- fade-in sections
+- hover effects
+- button transitions
+- card animations
+- smooth scrolling
+
+Do not make animations excessive.
+
+============================================================
+FUNCTIONALITY
+============================================================
+
+Add useful frontend interactions when appropriate:
+
+- mobile menu
+- smooth scrolling
+- FAQ accordion
+- contact form UI
+- gallery interactions
+- scroll reveal
+- back-to-top button
+
+Do not claim that a form actually sends email
+unless a backend is provided.
+
+============================================================
+SEO
+============================================================
+
+Include:
+
+<title>
+
+<meta name="description">
+
+<meta name="viewport">
+
+semantic headings
+
+alt text
+
+Open Graph metadata when appropriate.
+
+============================================================
+FINAL QUALITY CHECK
+============================================================
+
+Before returning the HTML, mentally verify:
+
+- Is it complete?
+- Does it look professional?
+- Is the content useful?
+- Does it represent the business?
+- Does it have enough sections?
+- Does it work on mobile?
+- Are buttons styled?
+- Is navigation present?
+- Is the footer complete?
+- Are images handled correctly?
+- Is there any placeholder text?
+- Is there any Markdown?
+- Is there any explanation outside the HTML?
+
+Return ONLY the finished HTML.
+
+`;
+
+
+/* ======================================================
+   EDIT SYSTEM PROMPT
+====================================================== */
+
+const EDIT_SYSTEM_PROMPT = `
+
+You are WebCraft AI, a senior frontend developer,
+UI/UX designer and website editor.
+
+You will receive:
+
+1. An existing complete website.
+2. A user's requested modification.
+
+Your job is to modify the existing website professionally.
+
+============================================================
+OUTPUT
+============================================================
+
+Return ONLY the complete updated HTML document.
+
+Start with:
+
+<!DOCTYPE html>
+
+End with:
+
+</html>
+
+No Markdown.
+
+No explanations.
+
+No code fences.
+
+============================================================
+IMPORTANT
+============================================================
+
+DO NOT destroy existing content unnecessarily.
+
+Preserve:
+
+- business information
+- existing sections
+- navigation
+- contact details
+- useful content
+- existing functionality
+- responsive behavior
+
+unless the user's instruction specifically asks
+to remove or replace something.
+
+============================================================
+DESIGN
+============================================================
+
+Improve the website rather than making it simpler.
+
+Maintain or improve:
+
+- professional visual hierarchy
+- spacing
+- typography
+- buttons
+- responsive design
+- animations
+- accessibility
+- navigation
+- mobile usability
+
+============================================================
+IMAGE HANDLING
+============================================================
+
+If an uploaded image is supplied, use:
+
+__WEBCRAFT_UPLOADED_IMAGE__
+
+as the image source.
+
+Use the uploaded image where the user requests it.
+
+For example:
+
+<img
+src="__WEBCRAFT_UPLOADED_IMAGE__"
+alt="Uploaded business image"
+>
+
+Do not replace an uploaded image with a nonexistent
+local file path.
+
+============================================================
+CONTENT
+============================================================
+
+If the user asks to add a section,
+create a complete useful section.
+
+Do not add only a heading and one sentence.
+
+If the user asks for:
+
+"Add pricing"
+
+create a professional pricing section.
+
+If the user asks for:
+
+"Add services"
+
+create detailed service cards.
+
+If the user asks for:
+
+"Make it more professional"
+
+improve layout, typography, spacing,
+colors, content structure and visual hierarchy.
+
+============================================================
+RESPONSIVE DESIGN
+============================================================
+
+Always preserve mobile responsiveness.
+
+The final HTML must work on:
+
+phones
+tablets
+laptops
+desktop computers.
+
+============================================================
+FINAL CHECK
+============================================================
+
+Return the COMPLETE website.
+
+Do not return only the changed section.
+
+Do not explain your changes.
+
+Return ONLY HTML.
+
+`;
+
+
+/* ======================================================
+   CREATE USER PROMPT
+====================================================== */
+
+function buildCreatePrompt(
+    prompt,
+    hasImage
+) {
+
+    let imageInstruction = "";
+
+
+    if (hasImage) {
+
+        imageInstruction = `
+
+IMPORTANT:
+
+The user has uploaded an image.
+
+Use this exact placeholder wherever the uploaded
+image should appear:
+
+__WEBCRAFT_UPLOADED_IMAGE__
+
+Use the uploaded image prominently in the website,
+preferably in the hero section or another visually
+important section appropriate to the business.
+
+Do not create a fake local image path.
+
+Do not omit the image.
+
+`;
+
+    }
+
+
+    return `
+
+USER'S WEBSITE REQUEST:
+
+${prompt}
+
+${imageInstruction}
+
+Create the complete professional website now.
+
+`;
+
+}
+
+
+/* ======================================================
+   EDIT USER PROMPT
+====================================================== */
+
+function buildEditPrompt(
+    instruction,
+    website,
+    hasImage
+) {
+
+    let imageInstruction = "";
+
+
+    if (hasImage) {
+
+        imageInstruction = `
+
+IMPORTANT:
+
+The user has uploaded an image.
+
+The uploaded image is available through:
+
+__WEBCRAFT_UPLOADED_IMAGE__
+
+Use this placeholder in the HTML wherever the user
+requests the uploaded image.
+
+`;
+
+    }
+
+
+    return `
+
+USER'S REQUESTED CHANGE:
+
+${instruction}
+
+${imageInstruction}
+
+============================================================
+EXISTING WEBSITE
+============================================================
+
+${website}
+
+============================================================
+
+Now return the COMPLETE updated HTML.
+
+Do not return explanations.
+
+Do not return Markdown.
+
+Return only HTML.
+
+`;
+
+}
+
+
+/* ======================================================
+   CALL AI
+====================================================== */
+
+async function runAI(
+    env,
+    systemPrompt,
+    userPrompt
+) {
+
+    if (
+        !env ||
+        !env.AI ||
+        typeof env.AI.run !== "function"
+    ) {
+
+        throw new Error(
+            "Workers AI binding is missing. Make sure wrangler.jsonc contains an AI binding named AI."
         );
 
     }
 
-};
+
+    const result =
+        await env.AI.run(
+            MODEL,
+            {
+
+                messages: [
+
+                    {
+                        role: "system",
+                        content: systemPrompt
+                    },
+
+                    {
+                        role: "user",
+                        content: userPrompt
+                    }
+
+                ],
+
+                max_tokens: 12000,
+
+                temperature: 0.35,
+
+                top_p: 0.9,
+
+                repetition_penalty: 1.05,
+
+                stream: false
+                            });
+
+
+        /* =====================================
+           PROCESS AI RESPONSE
+        ===================================== */
+
+        let website = "";
+
+        if (typeof aiResponse === "string") {
+            website = aiResponse;
+        } else if (aiResponse && typeof aiResponse.response === "string") {
+            website = aiResponse.response;
+        } else if (aiResponse && typeof aiResponse.result === "string") {
+            website = aiResponse.result;
+        } else if (aiResponse && typeof aiResponse.output === "string") {
+            website = aiResponse.output;
+        }
+
+
+        /* =====================================
+           CHECK AI RESPONSE
+        ===================================== */
+
+        if (!website || website.trim().length < 100) {
+
+            return jsonResponse({
+                success: false,
+                error: "AI did not return a complete website."
+            }, 500);
+
+        }
+
+
+        website = website.trim();
+
+
+        /* =====================================
+           REMOVE MARKDOWN CODE FENCES
+           IF AI ADDS THEM
+        ===================================== */
+
+        if (website.startsWith("```html")) {
+            website = website
+                .replace(/^```html\s*/i, "")
+                .replace(/\s*```$/i, "")
+                .trim();
+        }
+
+        else if (website.startsWith("```")) {
+            website = website
+                .replace(/^```\s*/i, "")
+                .replace(/\s*```$/i, "")
+                .trim();
+        }
+
+
+        /* =====================================
+           IMAGE SUPPORT
+        ===================================== */
+
+        /*
+         * If the user uploaded an image,
+         * make sure the AI receives instructions
+         * to actually use it in the generated website.
+         */
+
+        if (image && typeof image === "string") {
+
+            /*
+             * The image is already supplied to the AI
+             * through the user prompt.
+             *
+             * We do NOT place the image directly
+             * into the HTML here because that can
+             * make the generated website extremely large.
+             */
+
+            if (
+                !website.includes(image) &&
+                !website.includes("data:image")
+            ) {
+
+                /*
+                 * Leave the AI-generated HTML unchanged.
+                 *
+                 * The AI is responsible for deciding
+                 * where the uploaded image belongs.
+                 */
+
+            }
+
+        }
+
+
+        /* =====================================
+           BASIC HTML VALIDATION
+        ===================================== */
+
+        const lowerWebsite =
+            website.toLowerCase();
+
+
+        const looksLikeHTML =
+            lowerWebsite.includes("<html") ||
+            lowerWebsite.includes("<!doctype") ||
+            lowerWebsite.includes("<body") ||
+            lowerWebsite.includes("<main") ||
+            lowerWebsite.includes("<section");
+
+
+        if (!looksLikeHTML) {
+
+            return jsonResponse({
+                success: false,
+                error: "AI returned content that is not a valid website."
+            }, 500);
+
+        }
+
+
+        /* =====================================
+           RETURN GENERATED WEBSITE
+        ===================================== */
+
+        return jsonResponse({
+
+            success: true,
+
+            website: website
+
+        });
+
+
+    } catch (error) {
+
+        console.error(
+            "WEBCRAFT AI ERROR:",
+            error
+        );
+
+
+        return jsonResponse({
+
+            success: false,
+
+            error:
+                error && error.message
+                    ? error.message
+                    : "Website generation failed."
+
+        }, 500);
+
+    }
+
+}
+
+
+/* =====================================
+   JSON RESPONSE HELPER
+===================================== */
+
+function jsonResponse(data, status = 200) {
+
+    return new Response(
+        JSON.stringify(data),
+        {
+            status: status,
+
+            headers: {
+                "Content-Type":
+                    "application/json; charset=utf-8",
+
+                "Access-Control-Allow-Origin":
+                    "*",
+
+                "Access-Control-Allow-Methods":
+                    "POST, OPTIONS",
+
+                "Access-Control-Allow-Headers":
+                    "Content-Type, Accept"
+            }
+        }
+    );
+
+}
+
+      
