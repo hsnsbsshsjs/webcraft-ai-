@@ -4,9 +4,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 <title>WebCraft AI - Preview</title>
 
 <style>
+
 * {
     box-sizing: border-box;
 }
@@ -40,17 +42,23 @@ button:active {
     transform: scale(.98);
 }
 
-/* TOP BAR */
+
+/* ================================
+   TOP BAR
+================================ */
 
 .topbar {
     min-height: 70px;
     padding: 12px 20px;
     background: #111118;
     border-bottom: 1px solid #292932;
+
     display: flex;
     align-items: center;
     justify-content: space-between;
+
     gap: 15px;
+
     position: sticky;
     top: 0;
     z-index: 1000;
@@ -86,7 +94,10 @@ button:active {
     background: #9b5cff;
 }
 
-/* EDITOR */
+
+/* ================================
+   EDITOR
+================================ */
 
 .editor {
     background: #111118;
@@ -112,16 +123,26 @@ button:active {
 
 #editPrompt {
     flex: 1;
+
     min-height: 100px;
     max-height: 250px;
+
     resize: vertical;
+
     padding: 15px;
+
     border-radius: 12px;
+
     border: 1px solid #34343e;
+
     background: #191920;
+
     color: white;
+
     outline: none;
+
     font-size: 15px;
+
     line-height: 1.5;
 }
 
@@ -135,10 +156,15 @@ button:active {
 
 #editBtn {
     min-width: 170px;
+
     border-radius: 12px;
+
     background: #9b5cff;
+
     color: white;
+
     font-size: 15px;
+
     padding: 15px 20px;
 }
 
@@ -147,26 +173,38 @@ button:active {
     cursor: not-allowed;
 }
 
-/* IMAGE UPLOAD */
+
+/* ================================
+   IMAGE UPLOAD
+================================ */
 
 .image-upload-box {
     margin-top: 14px;
+
     padding: 15px;
+
     background: #191920;
+
     border: 1px solid #292933;
+
     border-radius: 12px;
 }
 
 .image-upload-title {
     font-size: 14px;
+
     font-weight: 700;
+
     margin-bottom: 10px;
 }
 
 .image-upload-row {
     display: flex;
+
     align-items: center;
+
     gap: 10px;
+
     flex-wrap: wrap;
 }
 
@@ -176,16 +214,27 @@ button:active {
 
 .image-select-btn {
     display: inline-flex;
+
     align-items: center;
+
     justify-content: center;
+
     min-height: 45px;
+
     padding: 10px 16px;
+
     border-radius: 10px;
+
     background: #25252f;
+
     border: 1px solid #363642;
+
     color: white;
+
     cursor: pointer;
+
     font-size: 14px;
+
     font-weight: 700;
 }
 
@@ -195,45 +244,70 @@ button:active {
 
 #imageName {
     color: #9999a5;
+
     font-size: 13px;
+
     word-break: break-word;
 }
 
 .image-preview-box {
     display: none;
+
     margin-top: 12px;
+
     position: relative;
+
     width: 150px;
 }
 
 #uploadedImagePreview {
     display: block;
+
     width: 150px;
+
     height: 100px;
+
     object-fit: cover;
+
     border-radius: 10px;
+
     border: 1px solid #34343f;
 }
 
 .remove-image-btn {
     position: absolute;
+
     top: -8px;
+
     right: -8px;
+
     width: 28px;
+
     height: 28px;
+
     border-radius: 50%;
+
     background: #ff5555;
+
     color: white;
+
     font-size: 14px;
+
     padding: 0;
 }
 
-/* STATUS */
+
+/* ================================
+   STATUS
+================================ */
 
 #status {
     min-height: 30px;
+
     padding-top: 12px;
+
     text-align: center;
+
     font-size: 14px;
 }
 
@@ -249,97 +323,147 @@ button:active {
     color: #c9a9ff;
 }
 
-/* DEVICES */
+
+/* ================================
+   DEVICES
+================================ */
 
 .device-toolbar {
     padding: 12px;
+
     background: #17171f;
+
     border-bottom: 1px solid #292932;
+
     display: flex;
+
     justify-content: center;
+
     align-items: center;
+
     gap: 8px;
+
     flex-wrap: wrap;
 }
 
 .device-btn {
     background: #25252f;
+
     border: 1px solid #363642;
+
     color: #d0d0d8;
+
     padding: 10px 17px;
+
     border-radius: 9px;
 }
 
 .device-btn.active {
     background: #9b5cff;
+
     color: white;
+
     border-color: #9b5cff;
 }
 
 .device-label {
     color: #888894;
+
     font-size: 12px;
+
     margin-left: 8px;
 }
 
-/* PREVIEW */
+
+/* ================================
+   PREVIEW
+================================ */
 
 .preview-wrapper {
     min-height: calc(100vh - 300px);
+
     background: #222;
+
     padding: 25px 15px 50px;
+
     overflow-x: auto;
 }
 
 .preview-stage {
     width: 100%;
+
     display: flex;
+
     justify-content: center;
+
     align-items: flex-start;
 }
 
 .preview-container {
     background: white;
+
     overflow: hidden;
-    box-shadow: 0 15px 50px rgba(0,0,0,.5);
+
+    box-shadow:
+        0 15px 50px rgba(0,0,0,.5);
+
     transition: width .25s ease;
 }
 
 .preview-container.desktop {
     width: 100%;
+
     max-width: 1400px;
+
     border-radius: 12px;
 }
 
 .preview-container.tablet {
     width: 768px;
+
     max-width: 100%;
+
     border-radius: 12px;
 }
 
 .preview-container.mobile {
     width: 390px;
+
     max-width: 100%;
+
     border-radius: 18px;
 }
 
 #websitePreview {
     display: block;
+
     width: 100%;
+
     height: 75vh;
+
     min-height: 500px;
+
     border: none;
+
     background: white;
 }
 
-/* EMPTY */
+
+/* ================================
+   EMPTY
+================================ */
 
 .empty {
     min-height: 65vh;
+
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     justify-content: center;
+
     text-align: center;
 }
 
@@ -353,17 +477,24 @@ button:active {
 
 .create-btn {
     background: #9b5cff;
+
     color: white;
+
     padding: 13px 22px;
+
     border-radius: 10px;
 }
 
-/* MOBILE */
+
+/* ================================
+   MOBILE
+================================ */
 
 @media (max-width: 700px) {
 
     .topbar {
         flex-direction: column;
+
         padding: 14px;
     }
 
@@ -401,6 +532,7 @@ button:active {
 
     .image-upload-row {
         align-items: stretch;
+
         flex-direction: column;
     }
 
@@ -418,15 +550,21 @@ button:active {
 
     #websitePreview {
         height: 70vh;
+
         min-height: 450px;
     }
 }
+
 </style>
 </head>
 
+
 <body>
 
-<!-- TOP BAR -->
+
+<!-- =================================
+     TOP BAR
+================================= -->
 
 <header class="topbar">
 
@@ -440,14 +578,19 @@ button:active {
             type="button"
             class="back-btn"
             onclick="goBack()">
+
             ← Back
+
         </button>
+
 
         <button
             type="button"
             class="download-btn"
             onclick="downloadWebsite()">
+
             📥 Download
+
         </button>
 
     </div>
@@ -455,15 +598,21 @@ button:active {
 </header>
 
 
-<!-- EDITOR -->
+
+<!-- =================================
+     EDITOR
+================================= -->
 
 <section class="editor">
 
     <div class="editor-inner">
 
         <div class="editor-title">
+
             ✏️ Edit your website with AI
+
         </div>
+
 
         <div class="edit-row">
 
@@ -479,14 +628,18 @@ Add a pricing section.
 Use my uploaded image as the hero image."
             ></textarea>
 
+
             <button
                 type="button"
                 id="editBtn"
                 onclick="editWebsite()">
+
                 ✨ Edit Website
+
             </button>
 
         </div>
+
 
 
         <!-- IMAGE UPLOAD -->
@@ -494,8 +647,11 @@ Use my uploaded image as the hero image."
         <div class="image-upload-box">
 
             <div class="image-upload-title">
+
                 📷 Add an image to your website
+
             </div>
+
 
             <div class="image-upload-row">
 
@@ -507,17 +663,22 @@ Use my uploaded image as the hero image."
 
                 </label>
 
+
                 <input
                     type="file"
                     id="imageInput"
                     accept="image/*"
                 >
 
+
                 <span id="imageName">
+
                     No image selected
+
                 </span>
 
             </div>
+
 
 
             <div
@@ -528,6 +689,7 @@ Use my uploaded image as the hero image."
                     id="uploadedImagePreview"
                     alt="Uploaded image preview"
                 >
+
 
                 <button
                     type="button"
@@ -550,9 +712,13 @@ Use my uploaded image as the hero image."
 </section>
 
 
-<!-- DEVICE TOOLBAR -->
+
+<!-- =================================
+     DEVICE TOOLBAR
+================================= -->
 
 <div class="device-toolbar">
+
 
     <button
         type="button"
@@ -564,6 +730,7 @@ Use my uploaded image as the hero image."
 
     </button>
 
+
     <button
         type="button"
         class="device-btn"
@@ -574,6 +741,7 @@ Use my uploaded image as the hero image."
 
     </button>
 
+
     <button
         type="button"
         class="device-btn"
@@ -583,6 +751,7 @@ Use my uploaded image as the hero image."
         📱 Mobile
 
     </button>
+
 
     <span
         class="device-label"
@@ -595,9 +764,13 @@ Use my uploaded image as the hero image."
 </div>
 
 
-<!-- PREVIEW -->
+
+<!-- =================================
+     PREVIEW
+================================= -->
 
 <main class="preview-wrapper">
+
 
     <div
         id="emptyState"
@@ -605,12 +778,18 @@ Use my uploaded image as the hero image."
         style="display:none;">
 
         <h2>
+
             No website found
+
         </h2>
 
+
         <p>
+
             Generate a website first before opening the preview.
+
         </p>
+
 
         <button
             type="button"
@@ -624,25 +803,30 @@ Use my uploaded image as the hero image."
     </div>
 
 
+
     <div
         id="previewStage"
         class="preview-stage">
+
 
         <div
             id="previewContainer"
             class="preview-container desktop">
 
+
             <iframe
                 id="websitePreview"
                 title="Generated Website"
-                sandbox="allow-scripts allow-forms allow-modals allow-popups">
+                sandbox="allow-scripts allow-forms allow-modals allow-popups allow-same-origin">
             </iframe>
+
 
         </div>
 
     </div>
 
 </main>
+
 
 
 <script>
@@ -660,37 +844,70 @@ const AI_URL =
 ===================================== */
 
 const preview =
-    document.getElementById("websitePreview");
+    document.getElementById(
+        "websitePreview"
+    );
+
 
 const editPrompt =
-    document.getElementById("editPrompt");
+    document.getElementById(
+        "editPrompt"
+    );
+
 
 const editBtn =
-    document.getElementById("editBtn");
+    document.getElementById(
+        "editBtn"
+    );
+
 
 const status =
-    document.getElementById("status");
+    document.getElementById(
+        "status"
+    );
+
 
 const previewContainer =
-    document.getElementById("previewContainer");
+    document.getElementById(
+        "previewContainer"
+    );
+
 
 const previewStage =
-    document.getElementById("previewStage");
+    document.getElementById(
+        "previewStage"
+    );
+
 
 const emptyState =
-    document.getElementById("emptyState");
+    document.getElementById(
+        "emptyState"
+    );
+
 
 const deviceLabel =
-    document.getElementById("deviceLabel");
+    document.getElementById(
+        "deviceLabel"
+    );
+
 
 const imageInput =
-    document.getElementById("imageInput");
+    document.getElementById(
+        "imageInput"
+    );
+
 
 const imageName =
-    document.getElementById("imageName");
+    document.getElementById(
+        "imageName"
+    );
+
 
 const imagePreviewBox =
-    document.getElementById("imagePreviewBox");
+    document.getElementById(
+        "imagePreviewBox"
+    );
+
 
 const uploadedImagePreview =
     document.getElementById(
@@ -724,7 +941,7 @@ if (!website) {
         "flex";
 
     showStatus(
-        "No generated website found.",
+        "No generated website found. Go back and generate a website first.",
         "error"
     );
 
@@ -736,10 +953,57 @@ if (!website) {
     emptyState.style.display =
         "none";
 
-    preview.srcdoc =
-        website;
+    loadWebsiteIntoPreview();
 
 }
+
+
+/* =====================================
+   LOAD WEBSITE SAFELY
+===================================== */
+
+function loadWebsiteIntoPreview() {
+
+    if (!website) {
+        return;
+    }
+
+    try {
+
+        preview.srcdoc =
+            website;
+
+    } catch (error) {
+
+        console.error(
+            "Preview error:",
+            error
+        );
+
+        showStatus(
+            "❌ Could not load the generated website.",
+            "error"
+        );
+
+    }
+
+}
+
+
+/* =====================================
+   PREVIEW LOAD EVENTS
+===================================== */
+
+preview.addEventListener(
+    "load",
+    function() {
+
+        console.log(
+            "WebCraft website preview loaded."
+        );
+
+    }
+);
 
 
 /* =====================================
@@ -754,27 +1018,32 @@ imageInput.addEventListener(
             imageInput.files &&
             imageInput.files[0];
 
+
         if (!file) {
             return;
         }
 
-        if (!file.type.startsWith("image/")) {
+
+        /* Check image type */
+
+        if (
+            !file.type ||
+            !file.type.startsWith("image/")
+        ) {
 
             showStatus(
-                "❌ Please choose an image file.",
+                "❌ Please choose a valid image.",
                 "error"
             );
 
             imageInput.value = "";
 
             return;
+
         }
 
 
-        /*
-         * Maximum image size:
-         * 5MB
-         */
+        /* Maximum 5MB */
 
         const maxSize =
             5 * 1024 * 1024;
@@ -790,6 +1059,7 @@ imageInput.addEventListener(
             imageInput.value = "";
 
             return;
+
         }
 
 
@@ -817,7 +1087,7 @@ imageInput.addEventListener(
 
 
                 showStatus(
-                    "📷 Image ready. Tell the AI what to do with it.",
+                    "📷 Image ready. Tell the AI where you want to use it.",
                     "success"
                 );
 
@@ -853,18 +1123,23 @@ function removeUploadedImage() {
     uploadedImageData =
         null;
 
+
     imageInput.value =
         "";
 
+
     imageName.textContent =
         "No image selected";
+
 
     uploadedImagePreview.removeAttribute(
         "src"
     );
 
+
     imagePreviewBox.style.display =
         "none";
+
 
     showStatus(
         "Image removed.",
@@ -878,13 +1153,18 @@ function removeUploadedImage() {
    STATUS
 ===================================== */
 
-function showStatus(message, type) {
+function showStatus(
+    message,
+    type
+) {
 
     status.textContent =
         message;
 
+
     status.className =
         "";
+
 
     if (type === "success") {
 
@@ -894,6 +1174,7 @@ function showStatus(message, type) {
 
     }
 
+
     if (type === "error") {
 
         status.classList.add(
@@ -901,6 +1182,7 @@ function showStatus(message, type) {
         );
 
     }
+
 
     if (type === "loading") {
 
@@ -929,13 +1211,16 @@ function goBack() {
    DEVICE PREVIEW
 ===================================== */
 
-function setDevice(device) {
+function setDevice(
+    device
+) {
 
     previewContainer.classList.remove(
         "desktop",
         "tablet",
         "mobile"
     );
+
 
     previewContainer.classList.add(
         device
@@ -946,9 +1231,11 @@ function setDevice(device) {
         .getElementById("desktopBtn")
         .classList.remove("active");
 
+
     document
         .getElementById("tabletBtn")
         .classList.remove("active");
+
 
     document
         .getElementById("mobileBtn")
@@ -960,6 +1247,7 @@ function setDevice(device) {
         document
             .getElementById("desktopBtn")
             .classList.add("active");
+
 
         deviceLabel.textContent =
             "Desktop — 1400px";
@@ -973,6 +1261,7 @@ function setDevice(device) {
             .getElementById("tabletBtn")
             .classList.add("active");
 
+
         deviceLabel.textContent =
             "Tablet — 768px";
 
@@ -984,6 +1273,7 @@ function setDevice(device) {
         document
             .getElementById("mobileBtn")
             .classList.add("active");
+
 
         deviceLabel.textContent =
             "Mobile — 390px";
@@ -1013,6 +1303,7 @@ async function editWebsite() {
         editPrompt.focus();
 
         return;
+
     }
 
 
@@ -1024,11 +1315,13 @@ async function editWebsite() {
         );
 
         return;
+
     }
 
 
     editBtn.disabled =
         true;
+
 
     editBtn.textContent =
         "✨ Editing...";
@@ -1044,6 +1337,10 @@ async function editWebsite() {
 
     try {
 
+        /* ================================
+           BUILD REQUEST
+        ================================= */
+
         const requestBody = {
 
             mode: "edit",
@@ -1056,8 +1353,8 @@ async function editWebsite() {
 
 
         /*
-         * Add image only when
-         * an image was selected.
+         * Only send image if user
+         * selected one.
          */
 
         if (uploadedImageData) {
@@ -1067,6 +1364,15 @@ async function editWebsite() {
 
         }
 
+
+        console.log(
+            "Sending WebCraft edit request..."
+        );
+
+
+        /* ================================
+           SEND REQUEST
+        ================================= */
 
         const response =
             await fetch(
@@ -1090,9 +1396,9 @@ async function editWebsite() {
             );
 
 
-        /*
-         * Read response as text first.
-         */
+        /* ================================
+           READ SERVER RESPONSE
+        ================================= */
 
         const responseText =
             await response.text();
@@ -1120,17 +1426,23 @@ async function editWebsite() {
         }
 
 
-        let data;
+        /* ================================
+           PARSE JSON
+        ================================= */
 
+        let data;
 
         try {
 
             data =
-                JSON.parse(
-                    responseText
-                );
+                JSON.parse(responseText);
 
         } catch (jsonError) {
+
+            console.error(
+                "JSON parsing error:",
+                jsonError
+            );
 
             throw new Error(
                 "The AI server returned an invalid response. HTTP " +
@@ -1139,6 +1451,10 @@ async function editWebsite() {
 
         }
 
+
+        /* ================================
+           CHECK SERVER RESPONSE
+        ================================= */
 
         if (
             !response.ok ||
@@ -1155,9 +1471,27 @@ async function editWebsite() {
         }
 
 
+        /* ================================
+           CHECK GENERATED WEBSITE
+        ================================= */
+
         if (
-            typeof data.website !== "string" ||
-            data.website.trim().length < 50
+            typeof data.website !== "string"
+        ) {
+
+            throw new Error(
+                "AI did not return website HTML."
+            );
+
+        }
+
+
+        const newWebsite =
+            data.website.trim();
+
+
+        if (
+            newWebsite.length < 50
         ) {
 
             throw new Error(
@@ -1167,17 +1501,17 @@ async function editWebsite() {
         }
 
 
-        /*
-         * Get new website.
-         */
+        /* ================================
+           UPDATE WEBSITE
+        ================================= */
 
         website =
-            data.website.trim();
+            newWebsite;
 
 
-        /*
-         * Save updated website.
-         */
+        /* ================================
+           SAVE WEBSITE
+        ================================= */
 
         localStorage.setItem(
             "generatedWebsite",
@@ -1185,36 +1519,31 @@ async function editWebsite() {
         );
 
 
-        /*
-         * Save latest instruction.
-         */
-
         localStorage.setItem(
             "websitePrompt",
             instruction
         );
 
 
-        /*
-         * Update preview.
-         */
+        /* ================================
+           UPDATE PREVIEW
+        ================================= */
 
         preview.srcdoc =
             website;
 
 
-        /*
-         * Clear editor.
-         */
+        /* ================================
+           CLEAR EDIT PROMPT
+        ================================= */
 
         editPrompt.value =
             "";
 
 
-        /*
-         * Clear uploaded image
-         * after successful edit.
-         */
+        /* ================================
+           CLEAR UPLOADED IMAGE
+        ================================= */
 
         uploadedImageData =
             null;
@@ -1233,256 +1562,13 @@ async function editWebsite() {
         );
 
 
-        imagePreviewBox.style.displ       imagePreviewBox.style.display =
-        "none";
+        imagePreviewBox.style.display =
+            "none";
 
 
-    /*
-     * Hide the remove button
-     */
-
-    removeImageBtn.style.display =
-        "none";
-
-
-    /*
-     * Reset image input
-     */
-
-    imageInput.value = "";
-
-
-    /*
-     * Clear image preview
-     */
-
-    uploadedImagePreview.removeAttribute(
-        "src"
-    );
-
-
-    /*
-     * Clear image name
-     */
-
-    imageName.textContent =
-        "No image selected";
-
-}
-
-
-/* =====================================
-   INITIALIZE IMAGE UPLOAD
-===================================== */
-
-imageInput.addEventListener(
-    "change",
-    handleImageUpload
-);
-
-
-/* =====================================
-   REMOVE IMAGE
-===================================== */
-
-removeImageBtn.addEventListener(
-    "click",
-    function () {
-
-        clearUploadedImage();
-
-        showStatus(
-            "🗑️ Image removed.",
-            "success"
-        );
-
-    }
-);
-
-
-/* =====================================
-   EDIT PROMPT + IMAGE
-===================================== */
-
-async function editWebsite() {
-
-    const instruction =
-        editPrompt.value.trim();
-
-
-    if (!instruction) {
-
-        showStatus(
-            "⚠️ Tell the AI what you want to change.",
-            "error"
-        );
-
-        editPrompt.focus();
-
-        return;
-
-    }
-
-
-    if (!website) {
-
-        showStatus(
-            "❌ No website is available to edit.",
-            "error"
-        );
-
-        return;
-
-    }
-
-
-    editBtn.disabled = true;
-
-    editBtn.textContent =
-        "✨ Editing...";
-
-
-    showStatus(
-        uploadedImageData
-            ? "🧠 AI is updating your website with your image..."
-            : "🧠 AI is updating your website...",
-        "loading"
-    );
-
-
-    try {
-
-        const response =
-            await fetch(
-                AI_URL,
-                {
-                    method: "POST",
-
-                    headers: {
-                        "Content-Type":
-                            "application/json",
-
-                        "Accept":
-                            "application/json"
-                    },
-
-                    body: JSON.stringify({
-
-                        mode: "edit",
-
-                        prompt: instruction,
-
-                        website: website,
-
-                        image: uploadedImageData || null
-
-                    })
-                }
-            );
-
-
-        const responseText =
-            await response.text();
-
-
-        console.log(
-            "WebCraft AI HTTP:",
-            response.status
-        );
-
-
-        console.log(
-            "WebCraft AI response:",
-            responseText
-        );
-
-
-        if (!responseText.trim()) {
-
-            throw new Error(
-                "The AI server returned an empty response. HTTP " +
-                response.status
-            );
-
-        }
-
-
-        let data;
-
-
-        try {
-
-            data =
-                JSON.parse(responseText);
-
-        } catch (jsonError) {
-
-            throw new Error(
-                "The AI server returned an invalid response. HTTP " +
-                response.status
-            );
-
-        }
-
-
-        if (
-            !response.ok ||
-            !data ||
-            data.success !== true
-        ) {
-
-            throw new Error(
-                data && data.error
-                    ? data.error
-                    : "Website editing failed."
-            );
-
-        }
-
-
-        if (
-            typeof data.website !== "string" ||
-            data.website.trim().length < 50
-        ) {
-
-            throw new Error(
-                "AI returned an incomplete website."
-            );
-
-        }
-
-
-        website =
-            data.website.trim();
-
-
-        localStorage.setItem(
-            "generatedWebsite",
-            website
-        );
-
-
-        localStorage.setItem(
-            "websitePrompt",
-            instruction
-        );
-
-
-        preview.srcdoc =
-            website;
-
-
-        editPrompt.value =
-            "";
-
-
-        /*
-         * Clear uploaded image after
-         * successful edit.
-         */
-
-        clearUploadedImage();
-
+        /* ================================
+           SUCCESS
+        ================================= */
 
         showStatus(
             "✅ Website updated successfully!",
@@ -1501,8 +1587,10 @@ async function editWebsite() {
         showStatus(
             "❌ " +
             (
-                error.message ||
-                "Something went wrong."
+                error &&
+                error.message
+                    ? error.message
+                    : "Something went wrong."
             ),
             "error"
         );
@@ -1512,6 +1600,7 @@ async function editWebsite() {
 
         editBtn.disabled =
             false;
+
 
         editBtn.textContent =
             "✨ Edit Website";
@@ -1539,59 +1628,81 @@ function downloadWebsite() {
     }
 
 
-    const blob =
-        new Blob(
-            [website],
-            {
-                type:
-                    "text/html;charset=utf-8"
-            }
+    try {
+
+        const blob =
+            new Blob(
+                [website],
+                {
+                    type:
+                        "text/html;charset=utf-8"
+                }
+            );
+
+
+        const url =
+            URL.createObjectURL(
+                blob
+            );
+
+
+        const link =
+            document.createElement(
+                "a"
+            );
+
+
+        link.href =
+            url;
+
+
+        link.download =
+            "webcraft-ai-website.html";
+
+
+        document.body.appendChild(
+            link
         );
 
 
-    const url =
-        URL.createObjectURL(blob);
+        link.click();
 
 
-    const link =
-        document.createElement("a");
+        link.remove();
 
 
-    link.href =
-        url;
+        setTimeout(
+            function() {
+
+                URL.revokeObjectURL(
+                    url
+                );
+
+            },
+            1000
+        );
 
 
-    link.download =
-        "webcraft-ai-website.html";
+        showStatus(
+            "✅ Website downloaded successfully!",
+            "success"
+        );
 
 
-    document.body.appendChild(
-        link
-    );
+    } catch (error) {
+
+        console.error(
+            "Download error:",
+            error
+        );
 
 
-    link.click();
+        showStatus(
+            "❌ Could not download the website.",
+            "error"
+        );
 
-
-    link.remove();
-
-
-    setTimeout(
-        function () {
-
-            URL.revokeObjectURL(
-                url
-            );
-
-        },
-        1000
-    );
-
-
-    showStatus(
-        "✅ Website downloaded successfully!",
-        "success"
-    );
+    }
 
 }
 
@@ -1609,47 +1720,9 @@ editPrompt.addEventListener(
             event.key === "Enter"
         ) {
 
+            event.preventDefault();
+
             editWebsite();
-
-        }
-
-    }
-);
-
-
-/* =====================================
-   DRAG AND DROP IMAGE SUPPORT
-===================================== */
-
-imagePreviewBox.addEventListener(
-    "dragover",
-    function(event) {
-
-        event.preventDefault();
-
-    }
-);
-
-
-imagePreviewBox.addEventListener(
-    "drop",
-    function(event) {
-
-        event.preventDefault();
-
-
-        const files =
-            event.dataTransfer.files;
-
-
-        if (
-            files &&
-            files.length > 0
-        ) {
-
-            processImageFile(
-                files[0]
-            );
 
         }
 
@@ -1668,4 +1741,4 @@ console.log(
 </script>
 
 </body>
-</html>       
+</html>
