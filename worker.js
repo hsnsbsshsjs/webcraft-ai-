@@ -4,22 +4,43 @@
  AI WEBSITE GENERATOR + EDITOR
 ========================================================
 
+ API:
+
+ POST /api/generate
+
+ CREATE:
+ {
+   "mode": "create",
+   "prompt": "Create a professional website for..."
+ }
+
+ EDIT:
+ {
+   "mode": "edit",
+   "prompt": "Add a pricing section...",
+   "website": "<existing HTML>"
+ }
+
+ EDIT WITH UPLOADED IMAGE:
+ {
+   "mode": "edit",
+   "prompt": "Use my uploaded image in the hero section",
+   "website": "<existing HTML>",
+   "image": "data:image/jpeg;base64,..."
+ }
+
  Required Wrangler binding:
 
  "ai": {
    "binding": "AI"
  }
 
- This Worker provides:
+ Static assets:
 
- POST /api/generate
-
- mode: "create"
- mode: "edit"
-
- Optional image:
- image: "data:image/jpeg;base64,..."
-
+ "assets": {
+   "directory": "./public/",
+   "binding": "ASSETS"
+ }
 ========================================================
 */
 
@@ -30,6 +51,12 @@
 
 const MODEL =
     "@cf/meta/llama-3.3-70b-instruct-fp8-fast";
+
+const MAX_IMAGE_LENGTH =
+    8 * 1024 * 1024;
+
+const MAX_WEBSITE_LENGTH =
+    500000;
 
 
 /* ======================================================
@@ -112,9 +139,7 @@ function cleanAIOutput(text) {
         String(text).trim();
 
 
-    /*
-     Remove markdown code fences.
-    */
+    /* Remove opening Markdown fence */
 
     result =
         result.replace(
@@ -122,11 +147,15 @@ function cleanAIOutput(text) {
             ""
         );
 
+
     result =
         result.replace(
             /^```\s*/i,
             ""
         );
+
+
+    /* Remove closing Markdown fence */
 
     result =
         result.replace(
@@ -135,16 +164,13 @@ function cleanAIOutput(text) {
         );
 
 
-    /*
-     Sometimes the model puts explanations
-     before the HTML.
+    /* Find DOCTYPE */
 
-     Try to start at <!DOCTYPE html>
-     if present.
-    */
+    const lower =
+        result.toLowerCase();
 
     const doctypeIndex =
-        result.toLowerCase().indexOf(
+        lower.indexOf(
             "<!doctype html>"
         );
 
@@ -158,24 +184,20 @@ function cleanAIOutput(text) {
     }
 
 
-    /*
-     If the model forgot DOCTYPE but
-     returned <html>, start there.
-    */
+    /* If DOCTYPE is missing, find <html> */
+
+    const htmlIndex =
+        result
+            .toLowerCase()
+            .indexOf("<html");
+
 
     if (
         !result
             .toLowerCase()
             .startsWith("<!doctype html>") &&
-        result
-            .toLowerCase()
-            .indexOf("<html") > 0
+        htmlIndex > 0
     ) {
-
-        const htmlIndex =
-            result
-                .toLowerCase()
-                .indexOf("<html");
 
         result =
             result.substring(
@@ -201,14 +223,6 @@ function getAIText(result) {
     }
 
 
-    /*
-     Workers AI normally returns:
-
-     {
-       response: "..."
-     }
-    */
-
     if (
         typeof result === "object" &&
         typeof result.response === "string"
@@ -219,11 +233,6 @@ function getAIText(result) {
     }
 
 
-    /*
-     Some model responses can be
-     represented differently.
-    */
-
     if (
         typeof result === "string"
     ) {
@@ -232,10 +241,6 @@ function getAIText(result) {
 
     }
 
-
-    /*
-     Try common alternatives.
-    */
 
     if (
         typeof result === "object" &&
@@ -272,14 +277,6 @@ function validateImage(image) {
     }
 
 
-    /*
-     Only allow data URI images.
-
-     Example:
-
-     data:image/jpeg;base64,...
-    */
-
     if (
         !image.startsWith(
             "data:image/"
@@ -291,13 +288,25 @@ function validateImage(image) {
     }
 
 
-    /*
-     Prevent extremely large requests.
-     Approximately 6MB of encoded image.
-    */
+    const allowedTypes = [
+        "data:image/jpeg",
+        "data:image/jpg",
+        "data:image/png",
+        "data:image/webp",
+        "data:image/gif"
+    ];
 
-    const MAX_IMAGE_LENGTH =
-        8 * 1024 * 1024;
+
+    const validType =
+        allowedTypes.some(
+            type =>
+                image.startsWith(type)
+        );
+
+
+    if (!validType) {
+        return false;
+    }
 
 
     if (
@@ -316,7 +325,7 @@ function validateImage(image) {
 
 
 /* ======================================================
-   REPLACE IMAGE PLACEHOLDER
+   INSERT UPLOADED IMAGE
 ====================================================== */
 
 function insertUploadedImage(
@@ -324,76 +333,131 @@ function insertUploadedImage(
     image
 ) {
 
-    if (
-        !image ||
-        !website
-    ) {
-
+    if (!website) {
         return website;
-
     }
 
 
     /*
-     The AI is instructed to use:
-
-     __WEBCRAFT_UPLOADED_IMAGE__
-
-     Replace every occurrence.
+       If there is an uploaded image,
+       replace every WebCraft placeholder.
     */
 
-    let result =
-        website.replaceAll(
-            "__WEBCRAFT_UPLOADED_IMAGE__",
-            image
-        );
+    if (image) {
+
+        website =
+            website.replaceAll(
+                "__WEBCRAFT_UPLOADED_IMAGE__",
+                image
+            );
+
+        website =
+            website.replaceAll(
+                "{{UPLOADED_IMAGE}}",
+                image
+            );
 
 
-    /*
-     Also support a second placeholder.
-    */
+        /*
+           If the AI did not use the placeholder,
+           replace the first existing image.
 
-    result =
-        result.replaceAll(
-            "{{UPLOADED_IMAGE}}",
-            image
-        );
+           This makes image upload reliable even if
+           the AI forgets the placeholder.
+        */
 
+        if (
+            !website.includes(image)
+        ) {
 
-    return result;
-
-}
-
-
-/* ======================================================
-   BASIC HTML SAFETY
-====================================================== */
-
-function limitWebsiteSize(
-    website
-) {
-
-    /*
-     Keep extremely abnormal responses
-     from being returned.
-
-     Normal websites should fit comfortably
-     below this.
-    */
-
-    const MAX_WEBSITE_LENGTH =
-        500000;
+            const imageRegex =
+                /<img\b([^>]*?)\bsrc\s*=\s*(['"])[^'"]*\2([^>]*)>/i;
 
 
-    if (
-        website.length >
-        MAX_WEBSITE_LENGTH
-    ) {
+            if (
+                imageRegex.test(website)
+            ) {
 
-        return website.substring(
-            0,
-            MAX_WEBSITE_LENGTH
-        );
+                website =
+                    website.replace(
+                        imageRegex,
+                        function (
+                            match,
+                            before,
+                            quote,
+                            after
+                        ) {
+
+                            return (
+                                "<img" +
+                                before +
+                                "src=" +
+                                quote +
+                                image +
+                                quote +
+                                after +
+                                ">"
+                            );
+
+                        }
+                    );
+
+            } else {
+
+                /*
+                   If there is no image at all,
+                   inject the uploaded image after <body>.
+                */
+
+                const bodyRegex =
+                    /<body\b[^>]*>/i;
+
+
+                if (
+                    bodyRegex.test(website)
+                ) {
+
+                    website =
+                        website.replace(
+                            bodyRegex,
+                            function(match) {
+
+                                return (
+                                    match +
+                                    "\n" +
+                                    '<div style="width:100%;display:flex;justify-content:center;padding:20px;">' +
+                                    '<img src="' +
+                                    image +
+                                    '" alt="Uploaded image" style="max-width:100%;height:auto;border-radius:20px;display:block;">' +
+                                    "</div>"
+                                );
+
+                            }
+                        );
+
+                }
+
+            }
+
+        }
+
+    } else {
+
+        /*
+           Remove placeholders if there is no image.
+        */
+
+        website =
+            website.replaceAll(
+                "__WEBCRAFT_UPLOADED_IMAGE__",
+                ""
+            );
+
+        website =
+            website.replaceAll(
+                "{{UPLOADED_IMAGE}}",
+                ""
+            );
 
     }
 
@@ -404,407 +468,519 @@ function limitWebsiteSize(
 
 
 /* ======================================================
-   CREATE WEBSITE SYSTEM PROMPT
+   VALIDATE WEBSITE
+====================================================== */
+
+function validateWebsite(website) {
+
+    if (!website) {
+
+        throw new Error(
+            "AI returned an empty website."
+        );
+
+    }
+
+
+    if (
+        website.length >
+        MAX_WEBSITE_LENGTH
+    ) {
+
+        throw new Error(
+            "The generated website is too large. Please try a shorter request."
+        );
+
+    }
+
+
+    const lower =
+        website.toLowerCase();
+
+
+    const hasHTML =
+        lower.includes("<html");
+
+
+    const hasHead =
+        lower.includes("<head");
+
+
+    const hasBody =
+        lower.includes("<body");
+
+
+    const hasClosingHTML =
+        lower.includes("</html>");
+
+
+    if (!hasHTML) {
+
+        throw new Error(
+            "AI returned invalid HTML: missing <html>."
+        );
+
+    }
+
+
+    if (!hasHead) {
+
+        throw new Error(
+            "AI returned incomplete HTML: missing <head>."
+        );
+
+    }
+
+
+    if (!hasBody) {
+
+        throw new Error(
+            "AI returned incomplete HTML: missing <body>."
+        );
+
+    }
+
+
+    if (!hasClosingHTML) {
+
+        throw new Error(
+            "AI returned incomplete HTML. The website appears to have been cut off."
+        );
+
+    }
+
+
+    return true;
+
+}
+
+
+/* ======================================================
+   CREATE SYSTEM PROMPT
 ====================================================== */
 
 const CREATE_SYSTEM_PROMPT = `
 
-You are WebCraft AI, a professional senior website designer,
-UX designer, copywriter and frontend developer.
+You are WebCraft AI.
 
-Your job is to create COMPLETE, PREMIUM, PROFESSIONAL,
-REAL-WORLD BUSINESS WEBSITES.
+You are a senior professional website designer,
+UX/UI designer, frontend developer, copywriter,
+conversion specialist and SEO specialist working
+as a premium web-development agency.
 
-The website must NEVER look like a short demo, toy project,
-school assignment or basic template.
+Your job is to create COMPLETE, PROFESSIONAL,
+MODERN, REAL-WORLD BUSINESS WEBSITES.
 
-The user may provide only a short description.
+The website must NEVER look like:
 
-You must intelligently expand that information into a
-complete professional website without inventing dangerous
-or obviously false claims.
+- a toy project
+- a school assignment
+- a basic HTML exercise
+- a tiny demo
+- a generic one-section landing page
+- an unfinished template
+- a website with placeholder nonsense
 
-============================================================
-OUTPUT RULE
-============================================================
+The final result should look like something a
+professional web-development agency could deliver
+to a paying client.
+
+========================================================
+OUTPUT RULES
+========================================================
 
 Return ONLY the complete HTML document.
+
+Do NOT return:
+
+- Markdown
+- explanations
+- comments outside the HTML
+- code fences
+- "Here is your website"
+- descriptions of what you created
 
 Start with:
 
 <!DOCTYPE html>
 
-End with:
+and finish with:
 
 </html>
 
-DO NOT explain the website.
+The HTML must be complete.
 
-DO NOT use Markdown.
-
-DO NOT use:
-
-\`\`\`html
-
-DO NOT put explanations before or after the HTML.
-
-============================================================
+========================================================
 TECHNOLOGY
-============================================================
+========================================================
 
-Create a complete self-contained website.
+Create a self-contained website using:
 
-Use:
-
-HTML5
-CSS3
-JavaScript
-
-Put CSS inside:
-
-<style>
-
-Put JavaScript inside:
-
-<script>
-
-Do not require npm.
+- HTML
+- CSS
+- JavaScript
 
 Do not require React.
 
+Do not require Vue.
+
 Do not require external build tools.
 
-The website must work when saved as a single .html file.
+Do not require npm.
 
-============================================================
-DESIGN QUALITY
-============================================================
+Do not require a backend.
 
-The website must look like it was designed by a professional
-web agency.
+The generated document must work when placed
+directly inside an iframe using srcdoc.
 
-Use:
+Use modern CSS.
 
-- strong visual hierarchy
-- modern typography
-- excellent spacing
-- professional navigation
-- polished buttons
-- attractive cards
-- responsive layouts
-- subtle animations
-- hover effects
-- professional color palette
-- modern hero section
-- attractive section transitions
-- mobile navigation
-- good accessibility
-- readable contrast
-- premium visual presentation
+Use semantic HTML.
 
-Avoid:
+Use responsive design.
 
-- huge empty spaces
-- childish designs
-- excessive gradients
-- generic plain text
-- tiny sections
-- unfinished sections
-- placeholder paragraphs
-- lorem ipsum
-- "coming soon"
-- "website generated by AI"
-- fake testimonials presented as real
+Use JavaScript only where it improves functionality.
+
+========================================================
+BUSINESS UNDERSTANDING
+========================================================
+
+Carefully understand the user's business.
+
+Use the information supplied by the user.
+
+Turn short descriptions into useful professional
+website content.
+
+For example, if the user says:
+
+"cleaning company in Kampala"
+
+do not create only:
+
+"Welcome to our cleaning company."
+
+Instead build a convincing professional cleaning
+company website with meaningful sections such as:
+
+- Hero
+- About
+- Services
+- Detailed service information
+- Benefits
+- Why choose us
+- How the service works
+- Service process
+- Gallery
+- FAQ
+- Contact
+- CTA
+- Footer
+
+The exact sections should depend on the business.
+
+========================================================
+IMPORTANT FACTUAL RULE
+========================================================
+
+Never invent specific factual claims that the user
+did not provide.
+
+Do NOT invent:
+
+- fake phone numbers
+- fake email addresses
+- fake physical addresses
 - fake awards
 - fake certifications
 - fake statistics
+- fake years of experience
+- fake branches
+- fake clients
+- fake testimonials
+- fake reviews
+- fake prices
+- fake guarantees
 
-============================================================
-BUSINESS UNDERSTANDING
-============================================================
+If information is missing, use neutral wording.
 
-Study the user's description carefully.
+For example:
 
-Identify:
+"Contact us for a customized quote."
 
-- business type
-- business name
-- location
-- services
-- products
-- target customers
-- important benefits
-- contact information
-- opening hours
-- calls to action
-- unique selling points
+instead of inventing a price.
 
-If information is missing, write useful neutral copy based
-on the business type.
+Testimonials should only be included if the user
+provides testimonials or clearly requests sample
+testimonials.
 
-Do NOT invent specific phone numbers,
-email addresses, addresses or prices.
+========================================================
+WEBSITE STRUCTURE
+========================================================
 
-If information is not provided, use sensible labels such as:
+Create approximately 10-14 meaningful sections
+when appropriate for the business.
 
-"Contact us for pricing"
+Do not force unnecessary sections.
 
-"Call us to discuss your requirements"
+Possible sections include:
 
-"Visit us"
+1. Navigation
+2. Hero
+3. About
+4. Services / Products
+5. Detailed service information
+6. Benefits
+7. Why choose us
+8. Process
+9. Gallery
+10. Testimonials
+11. FAQ
+12. Contact
+13. CTA
+14. Footer
 
-rather than inventing factual information.
+Every section must contain useful content.
 
-============================================================
-WEBSITE LENGTH
-============================================================
+Do not create empty cards.
 
-Create a substantial website.
+Do not repeat the same sentence across sections.
 
-Prefer approximately:
+========================================================
+HERO SECTION
+========================================================
 
-250-450 lines of HTML/CSS/JS
-
-when appropriate.
-
-The website should contain enough useful information to
-feel like a real business website.
-
-Do NOT artificially make sections long with meaningless text.
-
-============================================================
-REQUIRED STRUCTURE
-============================================================
-
-Choose sections appropriate to the business.
-
-Normally include:
-
-1. Sticky navigation
-
-2. Hero section
-   - strong headline
-   - supporting description
-   - primary CTA
-   - secondary CTA
-   - attractive visual
-
-3. About / company introduction
-
-4. Services or products
-
-5. Why choose us
-
-6. Detailed service/product information
-
-7. Process / how it works
-
-8. Gallery or visual showcase
-
-9. Testimonials section
-   Only if testimonials were supplied.
-   Otherwise create a "Why customers choose us"
-   section instead.
-
-10. FAQ
-
-11. Contact section
-
-12. Location information if provided
-
-13. Opening hours if provided
-
-14. Strong final CTA
-
-15. Professional footer
-
-============================================================
-CONTENT QUALITY
-============================================================
-
-Write specific useful copy.
-
-For example, instead of:
-
-"We offer cleaning services."
-
-write useful business-oriented copy describing:
-
-- what is cleaned
-- who the service is for
-- benefits
-- frequency
-- professional process
-- customer experience
-
-Do this intelligently for restaurants,
-schools, portfolios, construction companies,
-salons, hotels, shops, agencies, clinics,
-cleaning companies and other businesses.
-
-============================================================
-CALLS TO ACTION
-============================================================
-
-Use meaningful CTA buttons such as:
-
-Get a Quote
-Book a Service
-Contact Us
-Call Now
-WhatsApp Us
-View Services
-Explore Our Work
-Make an Enquiry
-Book Now
-
-Only use actions relevant to the business.
-
-============================================================
-WHATSAPP
-============================================================
-
-If a WhatsApp number is provided by the user,
-create a WhatsApp button using it.
-
-Never invent a WhatsApp number.
-
-============================================================
-IMAGES
-============================================================
-
-If the user uploads an image, use:
-
-__WEBCRAFT_UPLOADED_IMAGE__
-
-as the image source.
-
-Example:
-
-<img
-src="__WEBCRAFT_UPLOADED_IMAGE__"
-alt="Professional business image"
->
-
-If an uploaded image exists, use it prominently,
-especially in the hero section when appropriate.
-
-If there is no uploaded image, use tasteful remote
-image URLs from Unsplash Source or Unsplash images
-when suitable.
-
-Do not make the website dependent on a local image file
-that does not exist.
-
-============================================================
-IMAGE DESIGN
-============================================================
-
-Use images in:
-
-- hero section
-- about section
-- services when useful
-- gallery
-- CTA sections when appropriate
-
-Do not overload the page with images.
-
-Use:
-
-object-fit: cover;
-
-rounded corners where appropriate.
-
-============================================================
-RESPONSIVENESS
-============================================================
-
-The website MUST work on:
-
-- Android phones
-- iPhones
-- tablets
-- laptops
-- desktop screens
-
-Include responsive CSS.
-
-Use media queries.
-
-Make navigation usable on mobile.
-
-============================================================
-ANIMATIONS
-============================================================
-
-Add tasteful JavaScript/CSS animations such as:
-
-- fade-in sections
-- hover effects
-- button transitions
-- card animations
-- smooth scrolling
-
-Do not make animations excessive.
-
-============================================================
-FUNCTIONALITY
-============================================================
-
-Add useful frontend interactions when appropriate:
-
-- mobile menu
-- smooth scrolling
-- FAQ accordion
-- contact form UI
-- gallery interactions
-- scroll reveal
-- back-to-top button
-
-Do not claim that a form actually sends email
-unless a backend is provided.
-
-============================================================
-SEO
-============================================================
+Create a strong visual hero.
 
 Include:
 
-<title>
+- business name
+- strong headline
+- supporting text
+- primary CTA
+- secondary CTA where appropriate
+- professional visual area
 
-<meta name="description">
+The hero should immediately explain:
 
-<meta name="viewport">
+WHO the business is
 
-semantic headings
+WHAT it provides
 
-alt text
+WHO it helps
 
-Open Graph metadata when appropriate.
+WHY someone should care
 
-============================================================
+========================================================
+NAVIGATION
+========================================================
+
+Create a professional navigation bar.
+
+Include:
+
+- logo/business name
+- navigation links
+- CTA button where appropriate
+
+On mobile, create a functional mobile menu.
+
+The mobile menu should actually open and close
+using JavaScript.
+
+Navigation links should point to real sections
+using anchor IDs.
+
+========================================================
+DESIGN
+========================================================
+
+Create a premium visual identity.
+
+Use:
+
+- strong typography
+- excellent spacing
+- modern cards
+- subtle borders
+- rounded corners where appropriate
+- professional buttons
+- attractive section layouts
+- visual hierarchy
+- responsive grids
+- subtle hover effects
+- tasteful animations
+
+Avoid excessive animations.
+
+Do not make everything look like identical cards.
+
+Use varied layouts.
+
+========================================================
+COLOR
+========================================================
+
+Choose colors appropriate to the business.
+
+Maintain strong contrast.
+
+Ensure text is readable.
+
+Do not use dozens of random colors.
+
+Use a coherent color system.
+
+========================================================
+IMAGES
+========================================================
+
+When the user has NOT uploaded an image,
+you may use reliable remote image URLs.
+
+Do not use fake local paths such as:
+
+images/photo.jpg
+
+unless the user specifically supplied such a path.
+
+If an uploaded image exists, the user-uploaded
+image will be provided through this exact placeholder:
+
+__WEBCRAFT_UPLOADED_IMAGE__
+
+When using the placeholder:
+
+<img
+  src="__WEBCRAFT_UPLOADED_IMAGE__"
+  alt="..."
+>
+
+Use it prominently and appropriately.
+
+Do not omit it.
+
+Do not create a fake replacement local path.
+
+========================================================
+RESPONSIVENESS
+========================================================
+
+The website MUST work on:
+
+- mobile phones
+- tablets
+- laptops
+- desktop computers
+
+Use responsive CSS.
+
+Avoid:
+
+- horizontal overflow
+- fixed widths that break mobile
+- tiny text
+- buttons too small to tap
+- content extending outside the viewport
+
+Use media queries.
+
+========================================================
+FUNCTIONALITY
+========================================================
+
+Where appropriate, include:
+
+- mobile navigation
+- smooth scrolling
+- FAQ accordion
+- buttons
+- interactive cards
+- simple form validation
+- gallery interactions
+- back-to-top button
+- scroll animations
+
+Do not create fake backend functionality.
+
+Forms can display a friendly message indicating
+that the request has been prepared or that the
+business should be contacted directly.
+
+========================================================
+CONTACT
+========================================================
+
+If the user provides:
+
+- phone
+- WhatsApp
+- email
+- address
+- opening hours
+
+use them accurately.
+
+If WhatsApp is provided, create a WhatsApp CTA.
+
+Do not invent contact details.
+
+========================================================
+SEO
+========================================================
+
+Include:
+
+- meaningful title
+- meta description
+- viewport
+- semantic headings
+- useful alt text
+- appropriate HTML structure
+
+The title should reflect the business.
+
+========================================================
+CONTENT QUALITY
+========================================================
+
+Write polished, human-sounding copy.
+
+Avoid generic AI filler such as:
+
+"Welcome to our world of excellence."
+
+unless genuinely appropriate.
+
+Make copy specific to the business.
+
+Service descriptions should explain:
+
+- what the service is
+- who it is for
+- its benefits
+- what customers can expect
+
+========================================================
 FINAL QUALITY CHECK
-============================================================
+========================================================
 
-Before returning the HTML, mentally verify:
+Before returning the website, check that:
 
-- Is it complete?
-- Does it look professional?
-- Is the content useful?
-- Does it represent the business?
-- Does it have enough sections?
-- Does it work on mobile?
-- Are buttons styled?
-- Is navigation present?
-- Is the footer complete?
-- Are images handled correctly?
-- Is there any placeholder text?
-- Is there any Markdown?
-- Is there any explanation outside the HTML?
+- HTML is complete
+- CSS is complete
+- JavaScript is complete
+- all tags are properly closed
+- </html> exists
+- navigation works
+- mobile layout works
+- buttons are usable
+- sections are substantial
+- there are no obvious placeholder errors
+- there are no fake business facts
+- the website looks professionally designed
 
-Return ONLY the finished HTML.
-
+Return ONLY the final HTML.
 `;
 
 
@@ -814,153 +990,187 @@ Return ONLY the finished HTML.
 
 const EDIT_SYSTEM_PROMPT = `
 
-You are WebCraft AI, a senior frontend developer,
-UI/UX designer and website editor.
+You are WebCraft AI.
+
+You are a senior frontend developer,
+professional UI/UX designer and website editor.
 
 You will receive:
 
 1. An existing complete website.
 2. A user's requested modification.
 
-Your job is to modify the existing website professionally.
+Your job is to professionally modify the existing
+website while preserving useful existing information.
 
-============================================================
-OUTPUT
-============================================================
+========================================================
+OUTPUT RULES
+========================================================
 
-Return ONLY the complete updated HTML document.
+Return ONLY the COMPLETE updated HTML document.
+
+Do NOT return:
+
+- Markdown
+- explanations
+- code fences
+- descriptions
+- partial HTML
 
 Start with:
 
 <!DOCTYPE html>
 
-End with:
+and finish with:
 
 </html>
 
-No Markdown.
+========================================================
+PRESERVE EXISTING CONTENT
+========================================================
 
-No explanations.
+Unless the user explicitly asks you to remove or
+change something, preserve:
 
-No code fences.
-
-============================================================
-IMPORTANT
-============================================================
-
-DO NOT destroy existing content unnecessarily.
-
-Preserve:
-
+- business name
 - business information
+- phone numbers
+- emails
+- addresses
+- WhatsApp details
+- opening hours
+- services
+- useful descriptions
+- existing navigation
 - existing sections
-- navigation
-- contact details
-- useful content
-- existing functionality
+- useful functionality
 - responsive behavior
 
-unless the user's instruction specifically asks
-to remove or replace something.
+Do not unnecessarily rewrite the entire business.
 
-============================================================
-DESIGN
-============================================================
+========================================================
+IMPLEMENT THE USER'S REQUEST
+========================================================
 
-Improve the website rather than making it simpler.
+Actually make the requested change.
 
-Maintain or improve:
+If the user asks:
 
-- professional visual hierarchy
-- spacing
-- typography
-- buttons
-- responsive design
-- animations
-- accessibility
-- navigation
-- mobile usability
+"Add a pricing section"
 
-============================================================
-IMAGE HANDLING
-============================================================
+create a complete professional pricing section.
 
-If an uploaded image is supplied, use:
+Do not simply add:
+
+"Pricing coming soon."
+
+If information about actual prices was not provided,
+use clearly labelled neutral pricing language such as:
+
+"Request a Quote"
+
+or
+
+"Contact us for pricing."
+
+Do not invent actual prices.
+
+If the user asks:
+
+"Add testimonials"
+
+and no real testimonials were supplied, do not
+pretend the testimonials are genuine.
+
+Use a clearly neutral approach or explain through
+the UI that testimonials can be added by the business.
+
+========================================================
+UPLOADED IMAGE
+========================================================
+
+If the user uploaded an image, the exact image is
+available through this placeholder:
 
 __WEBCRAFT_UPLOADED_IMAGE__
 
-as the image source.
+Use this placeholder in the HTML.
 
-Use the uploaded image where the user requests it.
+Place the image where it makes sense.
 
-For example:
+Do not use a fake local file path.
 
-<img
-src="__WEBCRAFT_UPLOADED_IMAGE__"
-alt="Uploaded business image"
->
+Do not omit the uploaded image.
 
-Do not replace an uploaded image with a nonexistent
-local file path.
+========================================================
+DESIGN QUALITY
+========================================================
 
-============================================================
-CONTENT
-============================================================
+The modification must match the existing design.
 
-If the user asks to add a section,
-create a complete useful section.
+Maintain:
 
-Do not add only a heading and one sentence.
+- typography
+- spacing
+- colors
+- button style
+- cards
+- responsive behavior
+- visual hierarchy
 
-If the user asks for:
+Do not make the new section look like it belongs
+to a completely different website.
 
-"Add pricing"
+========================================================
+MOBILE
+========================================================
 
-create a professional pricing section.
+Everything you add must work properly on:
 
-If the user asks for:
+- phones
+- tablets
+- laptops
+- desktop
 
-"Add services"
+Do not introduce horizontal scrolling.
 
-create detailed service cards.
+========================================================
+FUNCTIONALITY
+========================================================
 
-If the user asks for:
+If the requested change requires JavaScript,
+include complete JavaScript.
 
-"Make it more professional"
+Do not break existing functionality.
 
-improve layout, typography, spacing,
-colors, content structure and visual hierarchy.
+If the website already has a mobile menu,
+FAQ system, gallery, buttons or other functionality,
+preserve it unless the user asks to change it.
 
-============================================================
-RESPONSIVE DESIGN
-============================================================
-
-Always preserve mobile responsiveness.
-
-The final HTML must work on:
-
-phones
-tablets
-laptops
-desktop computers.
-
-============================================================
+========================================================
 FINAL CHECK
-============================================================
+========================================================
 
-Return the COMPLETE website.
+Before returning the result, verify:
 
-Do not return only the changed section.
+- complete HTML
+- valid structure
+- </html> exists
+- CSS is complete
+- JavaScript is complete
+- existing business information is preserved
+- requested change is actually implemented
+- mobile responsive
+- no fake factual information
+- no unfinished sections
+- no Markdown
 
-Do not explain your changes.
-
-Return ONLY HTML.
-
+Return ONLY the COMPLETE updated HTML.
 `;
 
 
 /* ======================================================
-   CREATE USER PROMPT
+   BUILD CREATE PROMPT
 ====================================================== */
 
 function buildCreatePrompt(
@@ -975,22 +1185,40 @@ function buildCreatePrompt(
 
         imageInstruction = `
 
-IMPORTANT:
+========================================================
+UPLOADED IMAGE
+========================================================
 
-The user has uploaded an image.
+The user uploaded an image.
 
-Use this exact placeholder wherever the uploaded
-image should appear:
+Use this exact placeholder:
 
 __WEBCRAFT_UPLOADED_IMAGE__
 
-Use the uploaded image prominently in the website,
-preferably in the hero section or another visually
-important section appropriate to the business.
+Use it as an important visual element,
+preferably in the hero or another appropriate
+high-visibility section.
 
-Do not create a fake local image path.
+Do NOT invent a local image path.
 
-Do not omit the image.
+Do NOT omit the uploaded image.
+
+`;
+
+    } else {
+
+        imageInstruction = `
+
+========================================================
+IMAGES
+========================================================
+
+The user did not upload an image.
+
+Use appropriate reliable remote image URLs where
+visuals improve the design.
+
+Do not create fake local image paths.
 
 `;
 
@@ -999,13 +1227,31 @@ Do not omit the image.
 
     return `
 
-USER'S WEBSITE REQUEST:
+========================================================
+USER WEBSITE REQUEST
+========================================================
 
 ${prompt}
 
 ${imageInstruction}
 
-Create the complete professional website now.
+========================================================
+CREATE THE WEBSITE
+========================================================
+
+Understand the business request deeply.
+
+Create a polished, professional website suitable
+for a real paying business client.
+
+Make the website substantial, visually impressive,
+responsive and functional.
+
+Use the user's actual information.
+
+Do not invent factual business information.
+
+Return the complete HTML now.
 
 `;
 
@@ -1013,7 +1259,7 @@ Create the complete professional website now.
 
 
 /* ======================================================
-   EDIT USER PROMPT
+   BUILD EDIT PROMPT
 ====================================================== */
 
 function buildEditPrompt(
@@ -1029,16 +1275,17 @@ function buildEditPrompt(
 
         imageInstruction = `
 
-IMPORTANT:
+========================================================
+UPLOADED IMAGE
+========================================================
 
-The user has uploaded an image.
+The user uploaded an image.
 
-The uploaded image is available through:
+Use this exact placeholder wherever appropriate:
 
 __WEBCRAFT_UPLOADED_IMAGE__
 
-Use this placeholder in the HTML wherever the user
-requests the uploaded image.
+Make sure the image is actually used.
 
 `;
 
@@ -1047,25 +1294,38 @@ requests the uploaded image.
 
     return `
 
-USER'S REQUESTED CHANGE:
+========================================================
+USER'S REQUESTED CHANGE
+========================================================
 
 ${instruction}
 
 ${imageInstruction}
 
-============================================================
+========================================================
 EXISTING WEBSITE
-============================================================
+========================================================
 
 ${website}
 
-============================================================
+========================================================
+EDIT THE WEBSITE
+========================================================
 
-Now return the COMPLETE updated HTML.
+Apply the requested modification professionally.
+
+Preserve existing useful business information.
+
+Preserve existing functionality unless the user
+specifically asks to change it.
+
+Return the COMPLETE updated HTML.
 
 Do not return explanations.
 
 Do not return Markdown.
+
+Do not return a partial document.
 
 Return only HTML.
 
@@ -1075,7 +1335,7 @@ Return only HTML.
 
 
 /* ======================================================
-   CALL AI
+   CALL WORKERS AI
 ====================================================== */
 
 async function runAI(
@@ -1097,219 +1357,648 @@ async function runAI(
     }
 
 
-    const result =
-        await env.AI.run(
-            MODEL,
-            {
+    try {
 
-                messages: [
+        const result =
+            await env.AI.run(
+                MODEL,
+                {
+                    messages: [
+                        {
+                            role: "system",
+                            content: systemPrompt
+                        },
+                        {
+                            role: "user",
+                            content: userPrompt
+                        }
+                    ],
 
-                    {
-                        role: "system",
-                        content: systemPrompt
-                    },
+                    max_tokens:
+                        12000,
 
-                    {
-                        role: "user",
-                        content: userPrompt
-                    }
+                    temperature:
+                        0.35,
 
-                ],
+                    top_p:
+                        0.9,
 
-                max_tokens: 12000,
+                    repetition_penalty:
+                        1.05,
 
-                temperature: 0.35,
-
-                top_p: 0.9,
-
-                repetition_penalty: 1.05,
-
-                stream: false
-                            });
-
-
-        /* =====================================
-           PROCESS AI RESPONSE
-        ===================================== */
-
-        let website = "";
-
-        if (typeof aiResponse === "string") {
-            website = aiResponse;
-        } else if (aiResponse && typeof aiResponse.response === "string") {
-            website = aiResponse.response;
-        } else if (aiResponse && typeof aiResponse.result === "string") {
-            website = aiResponse.result;
-        } else if (aiResponse && typeof aiResponse.output === "string") {
-            website = aiResponse.output;
-        }
+                    stream:
+                        false
+                }
+            );
 
 
-        /* =====================================
-           CHECK AI RESPONSE
-        ===================================== */
+        const text =
+            getAIText(result);
 
-        if (!website || website.trim().length < 100) {
 
-            return jsonResponse({
-                success: false,
-                error: "AI did not return a complete website."
-            }, 500);
+        if (!text) {
+
+            throw new Error(
+                "Workers AI returned no website content."
+            );
 
         }
 
 
-        website = website.trim();
-
-
-        /* =====================================
-           REMOVE MARKDOWN CODE FENCES
-           IF AI ADDS THEM
-        ===================================== */
-
-        if (website.startsWith("```html")) {
-            website = website
-                .replace(/^```html\s*/i, "")
-                .replace(/\s*```$/i, "")
-                .trim();
-        }
-
-        else if (website.startsWith("```")) {
-            website = website
-                .replace(/^```\s*/i, "")
-                .replace(/\s*```$/i, "")
-                .trim();
-        }
-
-
-        /* =====================================
-           IMAGE SUPPORT
-        ===================================== */
-
-        /*
-         * If the user uploaded an image,
-         * make sure the AI receives instructions
-         * to actually use it in the generated website.
-         */
-
-        if (image && typeof image === "string") {
-
-            /*
-             * The image is already supplied to the AI
-             * through the user prompt.
-             *
-             * We do NOT place the image directly
-             * into the HTML here because that can
-             * make the generated website extremely large.
-             */
-
-            if (
-                !website.includes(image) &&
-                !website.includes("data:image")
-            ) {
-
-                /*
-                 * Leave the AI-generated HTML unchanged.
-                 *
-                 * The AI is responsible for deciding
-                 * where the uploaded image belongs.
-                 */
-
-            }
-
-        }
-
-
-        /* =====================================
-           BASIC HTML VALIDATION
-        ===================================== */
-
-        const lowerWebsite =
-            website.toLowerCase();
-
-
-        const looksLikeHTML =
-            lowerWebsite.includes("<html") ||
-            lowerWebsite.includes("<!doctype") ||
-            lowerWebsite.includes("<body") ||
-            lowerWebsite.includes("<main") ||
-            lowerWebsite.includes("<section");
-
-
-        if (!looksLikeHTML) {
-
-            return jsonResponse({
-                success: false,
-                error: "AI returned content that is not a valid website."
-            }, 500);
-
-        }
-
-
-        /* =====================================
-           RETURN GENERATED WEBSITE
-        ===================================== */
-
-        return jsonResponse({
-
-            success: true,
-
-            website: website
-
-        });
-
+        return text;
 
     } catch (error) {
 
         console.error(
-            "WEBCRAFT AI ERROR:",
+            "Workers AI error:",
             error
         );
 
 
-        return jsonResponse({
-
-            success: false,
-
-            error:
-                error && error.message
-                    ? error.message
-                    : "Website generation failed."
-
-        }, 500);
+        throw new Error(
+            error?.message ||
+            "Workers AI request failed."
+        );
 
     }
 
 }
 
 
-/* =====================================
-   JSON RESPONSE HELPER
-===================================== */
+/* ======================================================
+   GENERATE WEBSITE
+====================================================== */
 
-function jsonResponse(data, status = 200) {
+async function generateWebsite(
+    env,
+    body
+) {
 
-    return new Response(
-        JSON.stringify(data),
-        {
-            status: status,
+    const mode =
+        body.mode || "create";
 
-            headers: {
-                "Content-Type":
-                    "application/json; charset=utf-8",
 
-                "Access-Control-Allow-Origin":
-                    "*",
+    const prompt =
+        typeof body.prompt === "string"
+            ? body.prompt.trim()
+            : "";
 
-                "Access-Control-Allow-Methods":
-                    "POST, OPTIONS",
 
-                "Access-Control-Allow-Headers":
-                    "Content-Type, Accept"
-            }
+    if (!prompt) {
+
+        throw new Error(
+            "Please provide a website prompt."
+        );
+
+    }
+
+
+    let rawWebsite = "";
+
+
+    /* ==================================================
+       CREATE
+    ================================================== */
+
+    if (mode === "create") {
+
+        const hasImage =
+            Boolean(body.image);
+
+
+        if (
+            body.image &&
+            !validateImage(body.image)
+        ) {
+
+            throw new Error(
+                "The uploaded image is invalid or too large."
+            );
+
         }
+
+
+        const userPrompt =
+            buildCreatePrompt(
+                prompt,
+                hasImage
+            );
+
+
+        rawWebsite =
+            await runAI(
+                env,
+                CREATE_SYSTEM_PROMPT,
+                userPrompt
+            );
+
+    }
+
+
+    /* ==================================================
+       EDIT
+    ================================================== */
+
+    else if (mode === "edit") {
+
+        const website =
+            typeof body.website === "string"
+                ? body.website
+                : "";
+
+
+        if (!website.trim()) {
+
+            throw new Error(
+                "No existing website was provided for editing."
+            );
+
+        }
+
+
+        if (
+            website.length >
+            MAX_WEBSITE_LENGTH
+        ) {
+
+            throw new Error(
+                "The existing website is too large to edit."
+            );
+
+        }
+
+
+        if (
+            body.image &&
+            !validateImage(body.image)
+        ) {
+
+            throw new Error(
+                "The uploaded image is invalid or too large."
+            );
+
+        }
+
+
+        const hasImage =
+            Boolean(body.image);
+
+
+        const userPrompt =
+            buildEditPrompt(
+                prompt,
+                website,
+                hasImage
+            );
+
+
+        rawWebsite =
+            await runAI(
+                env,
+                EDIT_SYSTEM_PROMPT,
+                userPrompt
+            );
+
+    }
+
+
+    /* ==================================================
+       INVALID MODE
+    ================================================== */
+
+    else {
+
+        throw new Error(
+            `Unknown generation mode: ${mode}`
+        );
+
+    }
+
+
+    /* ==================================================
+       CLEAN AI OUTPUT
+    ================================================== */
+
+    let website =
+        cleanAIOutput(
+            rawWebsite
+        );
+
+
+    /* ==================================================
+       VALIDATE AI HTML
+    ================================================== */
+
+    validateWebsite(
+        website
+    );
+
+
+    /* ==================================================
+       INSERT USER IMAGE
+    ================================================== */
+
+    website =
+        insertUploadedImage(
+            website,
+            body.image || ""
+        );
+
+
+    /* ==================================================
+       FINAL VALIDATION
+    ================================================== */
+
+    validateWebsite(
+        website
+    );
+
+
+    if (
+        website.length >
+        MAX_WEBSITE_LENGTH
+    ) {
+
+        throw new Error(
+            "The generated website is too large."
+        );
+
+    }
+
+
+    return website;
+
+}
+
+
+/* ======================================================
+   HEALTH CHECK
+====================================================== */
+
+function healthCheck(env) {
+
+    return jsonResponse(
+        {
+            success: true,
+
+            service:
+                "WebCraft AI",
+
+            status:
+                "online",
+
+            model:
+                MODEL,
+
+            workersAI:
+                Boolean(
+                    env &&
+                    env.AI
+                ),
+
+            assets:
+                Boolean(
+                    env &&
+                    env.ASSETS
+                )
+        },
+        200
     );
 
 }
 
-      
+
+/* ======================================================
+   API HANDLER
+====================================================== */
+
+async function handleAPI(
+    request,
+    env
+) {
+
+    const url =
+        new URL(
+            request.url
+        );
+
+
+    const pathname =
+        url.pathname;
+
+
+    const method =
+        request.method.toUpperCase();
+
+
+    /* ==================================================
+       CORS PREFLIGHT
+    ================================================== */
+
+    if (
+        method === "OPTIONS"
+    ) {
+
+        return new Response(
+            null,
+            {
+                status: 204,
+
+                headers:
+                    CORS_HEADERS
+            }
+        );
+
+    }
+
+
+    /* ==================================================
+       HEALTH
+    ================================================== */
+
+    if (
+        pathname === "/api/health" &&
+        method === "GET"
+    ) {
+
+        return healthCheck(
+            env
+        );
+
+    }
+
+
+    /* ==================================================
+       GENERATE
+    ================================================== */
+
+    if (
+        pathname === "/api/generate"
+    ) {
+
+        if (
+            method !== "POST"
+        ) {
+
+            return jsonResponse(
+                {
+                    success: false,
+
+                    error:
+                        "Method not allowed. Use POST."
+                },
+                405
+            );
+
+        }
+
+
+        try {
+
+            let body;
+
+
+            try {
+
+                body =
+                    await request.json();
+
+            } catch (error) {
+
+                return jsonResponse(
+                    {
+                        success: false,
+
+                        error:
+                            "Invalid JSON request."
+                    },
+                    400
+                );
+
+            }
+
+
+            if (
+                !body ||
+                typeof body !== "object"
+            ) {
+
+                return jsonResponse(
+                    {
+                        success: false,
+
+                        error:
+                            "Invalid request body."
+                    },
+                    400
+                );
+
+            }
+
+
+            const website =
+                await generateWebsite(
+                    env,
+                    body
+                );
+
+
+            return jsonResponse(
+                {
+                    success: true,
+
+                    website: website
+                },
+                200
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Generation error:",
+                error
+            );
+
+
+            return jsonResponse(
+                {
+                    success: false,
+
+                    error:
+                        error?.message ||
+                        "Website generation failed."
+                },
+                500
+            );
+
+        }
+
+    }
+
+
+    /* ==================================================
+       UNKNOWN API ROUTE
+    ================================================== */
+
+    if (
+        pathname.startsWith(
+            "/api/"
+        )
+    ) {
+
+        return jsonResponse(
+            {
+                success: false,
+
+                error:
+                    "API endpoint not found."
+            },
+            404
+        );
+
+    }
+
+
+    return null;
+
+}
+
+
+/* ======================================================
+   MAIN WORKER
+====================================================== */
+
+export default {
+
+    async fetch(
+        request,
+        env
+    ) {
+
+        try {
+
+            /*
+               Handle API routes first.
+            */
+
+            const apiResponse =
+                await handleAPI(
+                    request,
+                    env
+                );
+
+
+            if (apiResponse) {
+
+                return apiResponse;
+
+            }
+
+
+            /*
+               Serve files from the public directory
+               through the ASSETS binding.
+            */
+
+            if (
+                env &&
+                env.ASSETS &&
+                typeof env.ASSETS.fetch === "function"
+            ) {
+
+                return env.ASSETS.fetch(
+                    request
+                );
+
+            }
+
+
+            /*
+               Helpful diagnostic if the ASSETS binding
+               has not been configured.
+            */
+
+            return htmlResponse(
+                `
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>WebCraft AI</title>
+<style>
+body{
+    margin:0;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#0b0b10;
+    color:#fff;
+    font-family:Arial,sans-serif;
+    padding:24px;
+}
+.box{
+    max-width:600px;
+    background:#15151d;
+    border:1px solid #292936;
+    border-radius:20px;
+    padding:30px;
+}
+h1{
+    margin-top:0;
+}
+p{
+    color:#b8b8c5;
+    line-height:1.7;
+}
+code{
+    color:#c18cff;
+}
+</style>
+</head>
+<body>
+<div class="box">
+<h1>✨ WebCraft AI</h1>
+<p>
+The Worker is running successfully, but the
+<code>ASSETS</code> binding is not configured.
+</p>
+<p>
+Make sure your wrangler.jsonc contains an assets
+binding named <code>ASSETS</code> pointing to the
+<code>./public/</code> directory.
+</p>
+</div>
+</body>
+</html>
+                `,
+                500
+            );
+
+
+        } catch (error) {
+
+            console.error(
+                "Worker error:",
+                error
+            );
+
+
+            return jsonResponse(
+                {
+                    success: false,
+
+                    error:
+                        error?.message ||
+                        "Internal Worker error."
+                },
+                500
+            );
+
+        }
+
+    }
+
+};
