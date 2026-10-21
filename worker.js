@@ -824,30 +824,72 @@ Navigation links should point to real sections
 using anchor IDs.
 
 ========================================================
+PREMIUM ART DIRECTION — REQUIRED
+========================================================
+
+Do not interpret “professional” as a generic template.
+Make deliberate art-direction decisions for THIS business.
+Before writing HTML, silently decide on a coherent visual concept:
+brand personality, audience, color palette, typography pairing,
+layout rhythm, image treatment, and signature visual detail.
+Do not output this planning; implement it in the page.
+
+Create a distinctive, agency-quality visual result. Use these rules:
+
+- Build a polished design system with CSS custom properties for colors,
+  spacing, content width, border radius, shadows, and typography.
+- Use a strong display headline and readable body typography. Use a
+  sensible system-font stack or a reliable font import when appropriate.
+- Use a centered content container with consistent alignment and generous
+  whitespace; avoid cramped sections and random margins.
+- Create visual rhythm by alternating light/dark or tinted section surfaces,
+  changing compositions, and mixing full-width and contained layouts.
+- Make the hero visually dominant: strong headline, concise copy, prominent
+  actions, and a large visual. Consider split layouts, image overlays,
+  editorial composition, badges, or decorative shapes when suitable.
+- Use a clear type scale, readable line lengths, strong contrast, and
+  deliberate heading hierarchy.
+- Use refined buttons with hover/focus states and clear primary/secondary
+  hierarchy. Make every interactive control look interactive.
+- Use a consistent icon style. Prefer simple inline SVG icons or CSS shapes;
+  do not use emoji as a substitute for every icon.
+- Add polished details such as subtle borders, restrained shadows, small
+  labels, separators, image crops, and tasteful transitions.
+- Use varied compositions: editorial split sections, asymmetrical grids,
+  numbered process steps, image-and-copy blocks, comparison rows, or feature
+  lists where they fit the business. Do not make every section a row of cards.
+- Cards should have purpose and visual variation. Avoid repetitive rounded
+  rectangles, excessive pills, excessive gradients, and giant empty spaces.
+- Make the footer intentional and complete, not a single line of text.
+- The page should feel designed as one cohesive brand, not a collection of
+  unrelated components.
+
+========================================================
+ANTI-TEMPLATE RULES
+========================================================
+
+Do NOT default to the same centered headline, gradient background, three
+identical cards, and generic footer for every business.
+Do NOT use a generic SaaS dashboard look for a local service business.
+Do NOT put every element inside a card.
+Do NOT use placeholder text, lorem ipsum, empty sections, fake logos,
+meaningless statistics, or decorative controls that do nothing.
+Do NOT add unnecessary animations or excessive gradients.
+Do NOT make up business facts to make a design appear impressive.
+Choose the structure, color, and imagery based on the business category
+and target customer. A restaurant, school, cleaning company, portfolio,
+clinic, shop, and law firm should have noticeably different art direction.
+
+========================================================
 DESIGN
 ========================================================
 
-Create a premium visual identity.
-
-Use:
-
-- strong typography
-- excellent spacing
-- modern cards
-- subtle borders
-- rounded corners where appropriate
-- professional buttons
-- attractive section layouts
-- visual hierarchy
-- responsive grids
-- subtle hover effects
-- tasteful animations
-
-Avoid excessive animations.
-
-Do not make everything look like identical cards.
-
-Use varied layouts.
+Create a premium visual identity using the art-direction rules above.
+Use strong typography, excellent spacing, modern components, subtle borders,
+professional buttons, attractive section layouts, visual hierarchy,
+responsive grids, and tasteful hover effects.
+Avoid excessive animation. Do not make everything look like identical cards.
+Use varied layouts and make the design feel specific to the business.
 
 ========================================================
 COLOR
@@ -1271,18 +1313,29 @@ ${imageInstruction}
 CREATE THE WEBSITE
 ========================================================
 
-Understand the business request deeply.
+Understand the business request deeply and identify the target audience.
+Create a distinct visual concept for this specific business before coding.
+Do not use a generic layout just because it is easy to generate.
 
-Create a polished, professional website suitable
-for a real paying business client.
+Build a substantial, agency-quality website suitable for a real paying
+business client. Make the first screen immediately impressive, with a
+well-composed hero, clear headline, useful copy, strong calls to action,
+and a prominent relevant image when available.
 
-Make the website substantial, visually impressive,
-responsive and functional.
+Create a coherent design system and use it consistently across the page.
+Use varied section compositions, excellent spacing, deliberate typography,
+responsive layouts, polished details, and meaningful business-specific copy.
+Include the sections that genuinely help this business; do not pad the page
+with repetitive or empty sections. Ensure all navigation links and controls
+work, and include accessible focus states and mobile behavior.
 
-Use the user's actual information.
+Use the user's actual information. Do not invent factual business
+information, prices, reviews, certifications, or contact details.
+Use honest neutral copy where information is missing.
 
-Do not invent factual business information.
-
+Before returning, silently review the page as a senior designer: improve any
+boring repeated layout, weak hero, inconsistent spacing, low contrast,
+missing mobile behavior, broken anchor, or unfinished section.
 Return the complete HTML now.
 
 `;
@@ -1410,7 +1463,7 @@ async function runAI(
                         12000,
 
                     temperature:
-                        0.35,
+                        0.55,
 
                     top_p:
                         0.9,
