@@ -325,6 +325,38 @@ function validateImage(image) {
 
 
 /* ======================================================
+   GENERATE AND STORE A CUSTOM HERO IMAGE
+====================================================== */
+
+async function generateHeroImage(env, prompt, origin) {
+    if (!env || !env.AI || !env.SITES) {
+        throw new Error("Image generation requires the AI and SITES bindings.");
+    }
+
+    const result = await env.AI.run(
+        "@cf/black-forest-labs/flux-1-schnell",
+        {
+            prompt:
+                "Create a premium, photorealistic website hero photograph for this business: " +
+                String(prompt).slice(0, 1200) +
+                ". Professional commercial photography, natural lighting, excellent composition, " +
+                "realistic details, wide landscape composition, no text, no letters, no watermark.",
+            steps: 4
+        }
+    );
+
+    if (!result || typeof result.image !== "string" || !result.image) {
+        throw new Error("The AI image model did not return an image.");
+    }
+
+    const imageId = crypto.randomUUID();
+    await env.SITES.put("webcraft-images/" + imageId, result.image);
+
+    return origin + "/api/image/" + imageId;
+}
+
+
+/* ======================================================
    INSERT UPLOADED IMAGE
 ====================================================== */
 
@@ -1454,6 +1486,7 @@ async function generateWebsite(
 
 
     let rawWebsite = "";
+    let imageToInsert = body.image || "";
 
 
     /* ==================================================
@@ -1461,10 +1494,6 @@ async function generateWebsite(
     ================================================== */
 
     if (mode === "create") {
-
-        const hasImage =
-            Boolean(body.image);
-
 
         if (
             body.image &&
@@ -1477,6 +1506,21 @@ async function generateWebsite(
 
         }
 
+
+        if (!body.image) {
+            try {
+                imageToInsert = await generateHeroImage(
+                    env,
+                    prompt,
+                    body.assetOrigin || ""
+                );
+            } catch (imageError) {
+                console.error("Hero image generation failed; continuing without a custom image:", imageError);
+                imageToInsert = "";
+            }
+        }
+
+        const hasImage = Boolean(imageToInsert);
 
         const userPrompt =
             buildCreatePrompt(
@@ -1601,7 +1645,7 @@ async function generateWebsite(
     website =
         insertUploadedImage(
             website,
-            body.image || ""
+            imageToInsert
         );
 
 
@@ -1689,6 +1733,59 @@ async function handleAPI(
 
     const method =
         request.method.toUpperCase();
+
+
+    /* ==================================================
+       SERVE GENERATED IMAGES
+    ================================================== */
+
+    if (pathname.startsWith("/api/image/") && method === "GET") {
+        const imageId = pathname.slice("/api/image/".length);
+
+        if (!/^[0-9a-f-]{36}$/i.test(imageId)) {
+            return new Response("Invalid image ID.", {
+                status: 400,
+                headers: CORS_HEADERS
+            });
+        }
+
+        if (!env || !env.SITES) {
+            return new Response("Image storage is unavailable.", {
+                status: 503,
+                headers: CORS_HEADERS
+            });
+        }
+
+        const imageBase64 = await env.SITES.get("webcraft-images/" + imageId);
+
+        if (!imageBase64) {
+            return new Response("Image not found.", {
+                status: 404,
+                headers: CORS_HEADERS
+            });
+        }
+
+        let binary;
+        try {
+            binary = atob(imageBase64);
+        } catch (error) {
+            return new Response("Stored image is invalid.", {
+                status: 500,
+                headers: CORS_HEADERS
+            });
+        }
+
+        const bytes = Uint8Array.from(binary, character => character.charCodeAt(0));
+
+        return new Response(bytes, {
+            headers: {
+                ...CORS_HEADERS,
+                "Content-Type": "image/jpeg",
+                "Cache-Control": "public, max-age=86400",
+                "X-Content-Type-Options": "nosniff"
+            }
+        });
+    }
 
 
     /* ==================================================
@@ -1795,6 +1892,8 @@ async function handleAPI(
 
             }
 
+
+            body.assetOrigin = url.origin;
 
             const website =
                 await generateWebsite(
